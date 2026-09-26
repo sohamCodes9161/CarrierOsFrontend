@@ -3,6 +3,10 @@
     {
       "source": "/api/:path*",
       "destination": "https://carrierosbackend.onrender.com/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
