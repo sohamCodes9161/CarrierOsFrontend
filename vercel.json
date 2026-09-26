@@ -1,14 +1,6 @@
 {
   "rewrites": [
     {
-      "source": "/v1/:path*",
-      "destination": "https://carrierosbackend.onrender.com/api/v1/:path*"
-    },
-    {
-      "source": "/api/:path*",
-      "destination": "https://carrierosbackend.onrender.com/api/:path*"
-    },
-    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
