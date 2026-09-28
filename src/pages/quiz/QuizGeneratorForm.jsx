@@ -35,7 +35,6 @@ export default function QuizGeneratorForm({ onStartQuiz, loading, history = [], 
 
         if (roadmapRes.status === 'fulfilled') {
           const raw = roadmapRes.value;
-          // Handles array directly OR wrapped { roadmaps: [...] }
           const list = Array.isArray(raw) ? raw : raw?.roadmaps || [];
           setRoadmaps(list);
         }
@@ -73,7 +72,6 @@ export default function QuizGeneratorForm({ onStartQuiz, loading, history = [], 
     setLoadingNodes(true);
     roadmapApi.getRoadmap(roadmapId)
       .then((roadmap) => {
-        // roadmapApi.getRoadmap(id) returns data.roadmap directly
         const nodes = roadmap?.nodes || [];
         setRoadmapNodes(nodes);
       })
@@ -115,11 +113,15 @@ export default function QuizGeneratorForm({ onStartQuiz, loading, history = [], 
     e.preventDefault();
     if (!topic.trim()) return;
 
+    // Clean payload builder to avoid passing empty string / null identifiers if optional
+    const cleanRoadmapId = roadmapId && roadmapId.trim() !== '' ? roadmapId.trim() : undefined;
+    const cleanNodeId = nodeId && nodeId.trim() !== '' ? nodeId.trim() : undefined;
+
     if (programDays !== '1') {
       createSpacedProgram({
         topic: topic.trim(),
-        roadmapId: roadmapId || null,
-        nodeId: nodeId || null,
+        roadmapId: cleanRoadmapId,
+        nodeId: cleanNodeId,
         days: Number(programDays),
         questionCount: Number(questionCount),
       });
@@ -130,8 +132,8 @@ export default function QuizGeneratorForm({ onStartQuiz, loading, history = [], 
       questionCount: Number(questionCount),
     };
 
-    if (roadmapId && roadmapId.trim() !== '') payload.roadmapId = roadmapId;
-    if (nodeId && nodeId.trim() !== '') payload.nodeId = nodeId;
+    if (cleanRoadmapId) payload.roadmapId = cleanRoadmapId;
+    if (cleanNodeId) payload.nodeId = cleanNodeId;
 
     onStartQuiz(payload);
   }
