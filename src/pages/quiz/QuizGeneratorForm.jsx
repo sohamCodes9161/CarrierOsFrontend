@@ -113,34 +113,29 @@ function handleSubmit(e) {
     e.preventDefault();
     if (!topic.trim()) return;
 
-    // 1. Handle the spaced program call safely
-    const programData = {
-      topic: topic.trim(),
-      days: Number(programDays),
-      questionCount: Number(questionCount),
-    };
-    if (roadmapId && roadmapId.trim() !== '') programData.roadmapId = roadmapId.trim();
-    if (nodeId && nodeId.trim() !== '') programData.nodeId = nodeId.trim();
-
-    if (programDays !== '1') {
-      createSpacedProgram(programData);
-    }
-
-    // 2. Build the main quiz payload strictly without null/undefined fields
+    // Base payload with mandatory fields
     const payload = {
       topic: topic.trim(),
       questionCount: Number(questionCount),
     };
 
-    // Only add these keys if they have a real value
-    if (roadmapId && roadmapId.trim() !== '') {
+    // Only attach roadmapId if it's a valid non-empty string
+    if (roadmapId && typeof roadmapId === 'string' && roadmapId.trim() !== '') {
       payload.roadmapId = roadmapId.trim();
     }
-    if (nodeId && nodeId.trim() !== '') {
+
+    // Only attach nodeId if it's a valid non-empty string
+    if (nodeId && typeof nodeId === 'string' && nodeId.trim() !== '') {
       payload.nodeId = nodeId.trim();
     }
 
-    console.log('Sending Payload:', payload); // Check your browser console to verify keys are omitted
+    if (programDays !== '1') {
+      createSpacedProgram({
+        ...payload,
+        days: Number(programDays),
+      });
+    }
+
     onStartQuiz(payload);
   }
 
