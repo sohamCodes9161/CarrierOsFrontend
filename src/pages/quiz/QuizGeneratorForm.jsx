@@ -109,32 +109,38 @@ export default function QuizGeneratorForm({ onStartQuiz, loading, history = [], 
     }
   }
 
-  function handleSubmit(e) {
+function handleSubmit(e) {
     e.preventDefault();
     if (!topic.trim()) return;
 
-    // Clean payload builder to avoid passing empty string / null identifiers if optional
-    const cleanRoadmapId = roadmapId && roadmapId.trim() !== '' ? roadmapId.trim() : undefined;
-    const cleanNodeId = nodeId && nodeId.trim() !== '' ? nodeId.trim() : undefined;
+    // 1. Handle the spaced program call safely
+    const programData = {
+      topic: topic.trim(),
+      days: Number(programDays),
+      questionCount: Number(questionCount),
+    };
+    if (roadmapId && roadmapId.trim() !== '') programData.roadmapId = roadmapId.trim();
+    if (nodeId && nodeId.trim() !== '') programData.nodeId = nodeId.trim();
 
     if (programDays !== '1') {
-      createSpacedProgram({
-        topic: topic.trim(),
-        roadmapId: cleanRoadmapId,
-        nodeId: cleanNodeId,
-        days: Number(programDays),
-        questionCount: Number(questionCount),
-      });
+      createSpacedProgram(programData);
     }
 
+    // 2. Build the main quiz payload strictly without null/undefined fields
     const payload = {
       topic: topic.trim(),
       questionCount: Number(questionCount),
     };
 
-    if (cleanRoadmapId) payload.roadmapId = cleanRoadmapId;
-    if (cleanNodeId) payload.nodeId = cleanNodeId;
+    // Only add these keys if they have a real value
+    if (roadmapId && roadmapId.trim() !== '') {
+      payload.roadmapId = roadmapId.trim();
+    }
+    if (nodeId && nodeId.trim() !== '') {
+      payload.nodeId = nodeId.trim();
+    }
 
+    console.log('Sending Payload:', payload); // Check your browser console to verify keys are omitted
     onStartQuiz(payload);
   }
 
