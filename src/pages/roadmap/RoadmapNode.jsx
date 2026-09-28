@@ -9,7 +9,7 @@ const IMPORTANCE_TONES = { core: 'primary', important: 'secondary', 'nice-to-hav
 const RESOURCE_TONES = { article: 'neutral', video: 'neutral', course: 'neutral', 'official-docs': 'neutral', book: 'neutral' };
 
 /** A single roadmap topic with its status control and expandable resources. */
-export default function RoadmapNode({ node, prerequisites = [], onStatusChange, saving = false }) {
+export default function RoadmapNode({ node, prerequisites = [], onStatusChange, onOpenDetail, saving = false }) {
   const done = node.status === 'completed';
   const skipped = node.status === 'skipped';
   const blocking = prerequisites.filter((p) => p.status !== 'completed' && p.status !== 'skipped');
@@ -20,7 +20,21 @@ export default function RoadmapNode({ node, prerequisites = [], onStatusChange, 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className={cn('text-sm font-semibold', done && 'text-muted line-through', skipped && 'text-muted')}>{node.title}</h3>
+            {onOpenDetail ? (
+              <button
+                type="button"
+                onClick={() => onOpenDetail(node.id)}
+                className={cn(
+                  'text-left text-sm font-semibold hover:underline',
+                  done && 'text-muted line-through',
+                  skipped && 'text-muted'
+                )}
+              >
+                {node.title}
+              </button>
+            ) : (
+              <h3 className={cn('text-sm font-semibold', done && 'text-muted line-through', skipped && 'text-muted')}>{node.title}</h3>
+            )}
             {node.priorityLabel && <Badge tone={PRIORITY_TONES[node.priorityLabel] || 'neutral'}>{humanize(node.priorityLabel)}</Badge>}
             {node.importance && <Badge tone={IMPORTANCE_TONES[node.importance] || 'neutral'}>{humanize(node.importance)}</Badge>}
           </div>
