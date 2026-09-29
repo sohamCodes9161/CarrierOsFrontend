@@ -43,7 +43,7 @@ export default function RoadmapPage() {
     setConfirmReplace(false);
     const result = await generate.run({ targetRole: role.trim(), targetSkills: skills });
     if (result.ok) {
-      toast.success('Roadmap generated.');
+      toast.success('Roadmap generated successfully.');
       navigate(`/roadmap/${result.data._id}`);
     }
   }
@@ -60,22 +60,21 @@ export default function RoadmapPage() {
       return;
     }
     setRoleError('');
-    // One roadmap exists per target role: generating again replaces it (and its progress).
     const exists = roadmaps.some((r) => normalizeRole(r.targetRole) === normalizeRole(trimmed));
     if (exists) setConfirmReplace(true);
     else runGenerate();
   }
 
   return (
-    <div>
+    <div className="pb-12">
       <PageHeader
-        title="Learning roadmap"
-        description="A prioritized, ordered plan for a target role that skips what you already know."
+        title="Learning Roadmaps"
+        description="A prioritized, ordered curriculum tailored to your target role, skipping the skills you already know."
       />
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-        <SectionCard title="Generate a roadmap" className="self-start lg:col-span-2">
-          <form onSubmit={handleSubmit} noValidate className="space-y-4">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
+        <SectionCard title="Generate new roadmap" className="self-start lg:col-span-2 shadow-sm border-primary/20 bg-surface-2/50">
+          <form onSubmit={handleSubmit} noValidate className="space-y-5">
             <ErrorAlert error={generate.error}>
               {needsProfile && (
                 <Button as={Link} to="/career-profile" variant="outline" size="xs" className="mt-2 bg-base-100">
@@ -89,7 +88,7 @@ export default function RoadmapPage() {
                 {...fieldProps('targetRole', roleError)}
                 type="text"
                 className={inputClass(roleError)}
-                placeholder="e.g. Full-stack Developer"
+                placeholder="e.g. Frontend Engineer, DevOps"
                 maxLength={100}
                 value={role}
                 onChange={(e) => {
@@ -100,57 +99,70 @@ export default function RoadmapPage() {
               />
             </FormField>
 
-            <FormField id="targetSkills" label="Skills to include (optional)" hint="Press Enter after each skill. Up to 30.">
+            <FormField id="targetSkills" label="Specific skills to include (optional)" hint="Press Enter after each skill. Up to 30.">
               <TagInput
                 id="targetSkills"
                 value={skills}
                 onChange={setSkills}
                 max={30}
-                placeholder="e.g. Docker, GraphQL"
+                placeholder="e.g. React, Kubernetes"
                 disabled={generate.loading}
                 aria-describedby="targetSkills-hint"
               />
             </FormField>
 
-            <p className="text-xs text-muted">Requires a career profile so the roadmap can skip skills you already have.</p>
+            <div className="rounded-lg bg-info/5 border border-info/20 p-3 flex gap-3 items-start">
+              <Icon name="info" className="h-4 w-4 text-info mt-0.5 shrink-0" />
+              <p className="text-xs text-info/90 leading-relaxed">
+                We use your Career Profile to ensure the generated roadmap skips skills you already possess, focusing only on your skill gaps.
+              </p>
+            </div>
 
             {generate.loading ? (
-              <AiWaitNotice title="Building your roadmap…" description="This usually takes 20–60 seconds." />
+              <AiWaitNotice title="Curating your curriculum…" description="Analyzing your profile and structuring topics. This takes 20–60 seconds." />
             ) : (
-              <Button type="submit" className="w-full">
+              <Button type="submit" className="w-full h-11 text-base">
                 <Icon name="sparkles" className="h-4 w-4" />
-                Generate roadmap
+                Generate Roadmap
               </Button>
             )}
           </form>
         </SectionCard>
 
         <div className="lg:col-span-3">
-          <h2 className="mb-3 text-base font-semibold">Your roadmaps</h2>
+          <h2 className="mb-4 text-lg font-bold text-white">Your Roadmaps</h2>
           {list.loading ? (
             <SkeletonRows rows={3} />
           ) : list.error ? (
             <ErrorState error={list.error} onRetry={() => list.reload()} />
           ) : roadmaps.length === 0 ? (
-            <div className="surface">
-              <EmptyState icon="map" title="No roadmaps yet" description="Generate one for the role you’re working toward." />
+            <div className="surface rounded-2xl border-dashed border-base-300 p-8">
+              <EmptyState icon="map" title="No roadmaps yet" description="Generate a learning path for the role you’re working toward to get started." />
             </div>
           ) : (
-            <ul className="space-y-3">
+            <ul className="space-y-4">
               {roadmaps.map((r) => (
                 <li key={r._id}>
-                  <Link to={`/roadmap/${r._id}`} className="surface lift flex items-center gap-4 p-4">
-                    <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                      <Icon name="map" className="h-5 w-5" />
+                  <Link 
+                    to={`/roadmap/${r._id}`} 
+                    className="group flex items-center gap-5 rounded-2xl border border-base-300 bg-surface p-5 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:bg-base-200/50 hover:shadow-md"
+                  >
+                    <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-content shadow-sm">
+                      <Icon name="map" className="h-6 w-6" />
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-semibold">{r.targetRole}</span>
-                      <span className="mt-1 flex flex-wrap items-center gap-2">
-                        <Badge tone="neutral">~{formatDurationDays(r.totalEstimatedDurationDays)}</Badge>
-                        <span className="text-xs text-muted">Updated {formatDate(r.updatedAt || r.generatedAt)}</span>
+                      <span className="block truncate text-lg font-bold text-white group-hover:text-primary transition-colors">{r.targetRole}</span>
+                      <span className="mt-2 flex flex-wrap items-center gap-3">
+                        <Badge tone="info" className="bg-info/10 text-info border-info/20">
+                          <Icon name="clock" className="h-3 w-3 mr-1" />
+                          ~{formatDurationDays(r.totalEstimatedDurationDays)}
+                        </Badge>
+                        <span className="text-xs font-medium text-muted">Updated {formatDate(r.updatedAt || r.generatedAt)}</span>
                       </span>
                     </span>
-                    <Icon name="arrow-right" className="h-4 w-4 text-muted" />
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-base-200 transition-colors group-hover:bg-primary/20">
+                      <Icon name="arrow-right" className="h-4 w-4 text-muted group-hover:text-primary" />
+                    </div>
                   </Link>
                 </li>
               ))}
@@ -162,7 +174,7 @@ export default function RoadmapPage() {
       <ConfirmDialog
         open={confirmReplace}
         title="Replace existing roadmap?"
-        description={`You already have a roadmap for “${role.trim()}”. Generating it again replaces it and resets your progress.`}
+        description={`You already have a roadmap for “${role.trim()}”. Generating it again will replace the existing one and reset your learning progress.`}
         confirmLabel="Replace and generate"
         danger
         onConfirm={runGenerate}

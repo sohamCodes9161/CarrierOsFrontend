@@ -13,6 +13,7 @@ import { useApi } from '../../hooks/useApi.js';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js';
 import { roadmapApi } from '../../services/api/index.js';
 import { formatDate, formatDurationDays, pluralize } from '../../utils/format.js';
+import { cn } from '../../utils/cn.js'; // <-- This is the missing import that caused the crash!
 import NodeDrawer from './NodeDrawer.jsx';
 import RoadmapGraph from './RoadmapGraph.jsx';
 import RoadmapNode from './RoadmapNode.jsx';
@@ -27,8 +28,8 @@ export default function RoadmapDetail() {
   const toast = useToast();
   const { data: roadmap, error, loading, reload, setData } = useApi(() => roadmapApi.getRoadmap(id), [id]);
   const [mode, setMode] = useState('graph');
-  const [view, setView] = useState('milestones'); // sub-tab within list mode
-  const [saving, setSaving] = useState({}); // nodeId -> true while a status update is in flight
+  const [view, setView] = useState('milestones'); 
+  const [saving, setSaving] = useState({}); 
   const [selectedNodeId, setSelectedNodeId] = useState(null);
 
   useDocumentTitle(roadmap ? `${roadmap.targetRole} · Roadmap` : 'Roadmap');
@@ -44,8 +45,6 @@ export default function RoadmapDetail() {
     return orderedNodes.filter((n) => !inMilestone.has(n.id));
   }, [milestones, orderedNodes]);
 
-  // The graph's lanes reuse the roadmap's own milestones as logical phases (e.g.
-  // Foundations -> Advanced), keeping the graph grounded in real backend data.
   const lanes = useMemo(
     () =>
       milestones
@@ -80,7 +79,6 @@ export default function RoadmapDetail() {
     setData((r) => ({ ...r, nodes: r.nodes.map((n) => (n.id === nodeId ? { ...n, status } : n)) }));
   }
 
-  // Optimistic update: the UI changes immediately and rolls back if the request fails.
   async function handleStatusChange(nodeId, status) {
     const previous = nodesById.get(nodeId)?.status || 'not_started';
     if (previous === status) return;
@@ -119,7 +117,7 @@ export default function RoadmapDetail() {
   const selectedPrereqs = selectedNode ? (selectedNode.prerequisiteIds || []).map((pid) => nodesById.get(pid)).filter(Boolean) : [];
 
   return (
-    <div>
+    <div className="pb-12">
       <PageHeader
         backTo="/roadmap"
         backLabel="All roadmaps"
@@ -127,68 +125,94 @@ export default function RoadmapDetail() {
         description={`~${formatDurationDays(roadmap.totalEstimatedDurationDays)} estimated · generated ${formatDate(roadmap.generatedAt)}`}
       />
 
-      <div className="surface mb-6 p-5">
-        <div className="mb-2 flex items-end justify-between gap-3">
-          <div>
-            <p className="eyebrow">Progress</p>
-            <p className="text-2xl font-semibold tabular-nums">{percent}%</p>
-          </div>
-          <p className="text-right text-sm text-muted">
-            {completed} of {pluralize(total, 'topic')} completed
-            {counts.in_progress ? ` · ${counts.in_progress} in progress` : ''}
-            {counts.skipped ? ` · ${counts.skipped} skipped` : ''}
-          </p>
+      {/* Upgraded Progress Widget */}
+      <div className="surface mb-8 overflow-hidden rounded-2xl p-6 relative">
+        <div className="absolute top-0 left-0 h-1 w-full bg-base-300">
+          <div className="h-full bg-primary transition-all duration-500 ease-out" style={{ width: `${percent}%` }} />
         </div>
-        <progress className="progress progress-primary h-2.5 w-full" value={completed} max={total || 1} aria-label="Roadmap progress" />
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div>
+            <p className="eyebrow mb-1 text-primary">Your Progress</p>
+            <div className="flex items-baseline gap-2">
+              <span className="text-4xl font-bold tracking-tight text-white">{percent}%</span>
+              <span className="text-sm font-medium text-muted">completed</span>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-4 text-sm font-medium">
+            <div className="flex flex-col">
+              <span className="text-white text-lg">{completed} / {total}</span>
+              <span className="text-muted text-xs uppercase tracking-wider">Topics</span>
+            </div>
+            {counts.in_progress > 0 && (
+              <div className="flex flex-col border-l border-base-300 pl-4">
+                <span className="text-info text-lg">{counts.in_progress}</span>
+                <span className="text-muted text-xs uppercase tracking-wider">In Progress</span>
+              </div>
+            )}
+            {counts.skipped > 0 && (
+              <div className="flex flex-col border-l border-base-300 pl-4">
+                <span className="text-muted text-lg">{counts.skipped}</span>
+                <span className="text-muted text-xs uppercase tracking-wider">Skipped</span>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <SectionCard title="Overview" className="lg:col-span-2">
-          <p className="whitespace-pre-line text-sm leading-relaxed">{roadmap.overallSummary}</p>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 mb-8">
+        <SectionCard title="Overview" className="lg:col-span-2 shadow-sm">
+          <p className="whitespace-pre-line text-[15px] leading-relaxed text-white/80">{roadmap.overallSummary}</p>
         </SectionCard>
-        <SectionCard title="Skill gap">
-          <div className="space-y-4">
+        <SectionCard title="Skill gap" className="shadow-sm">
+          <div className="space-y-5">
             <div>
-              <p className="eyebrow mb-2">Already have</p>
+              <p className="eyebrow mb-2.5">Already have</p>
               <ChipList items={skillGap.alreadyHave} tone="success" empty="None of your requested skills yet." />
             </div>
             <div>
-              <p className="eyebrow mb-2">To learn</p>
+              <p className="eyebrow mb-2.5">To learn</p>
               <ChipList items={skillGap.missing} tone="warning" empty="No specific skills were requested." />
             </div>
           </div>
         </SectionCard>
       </div>
 
-      <div className="mb-4 mt-8 flex flex-wrap items-center justify-between gap-3">
-        <div role="tablist" className="tabs tabs-boxed inline-flex bg-base-100 p-1">
+      {/* Upgraded View Toggles */}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-base-300 pb-4">
+        <div role="tablist" className="flex items-center gap-1 rounded-lg bg-surface-2 p-1 border border-base-300">
           {MODES.map((m) => (
             <button
               key={m.value}
               type="button"
               role="tab"
               aria-selected={mode === m.value}
-              className={`tab h-8 gap-1.5 ${mode === m.value ? 'tab-active !bg-primary !text-primary-content' : ''}`}
+              className={cn(
+                'flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-all',
+                mode === m.value ? 'bg-primary text-primary-content shadow' : 'text-muted hover:text-white hover:bg-base-200/50'
+              )}
               onClick={() => setMode(m.value)}
             >
-              <Icon name={m.icon} className="h-3.5 w-3.5" />
+              <Icon name={m.icon} className="h-4 w-4" />
               {m.label}
             </button>
           ))}
         </div>
 
         {mode === 'list' && (
-          <div role="tablist" className="tabs tabs-boxed inline-flex bg-base-100 p-1">
+          <div role="tablist" className="flex items-center gap-1 rounded-lg bg-surface-2 p-1 border border-base-300">
             {[
               { value: 'milestones', label: 'By milestone' },
-              { value: 'all', label: 'All topics in order' },
+              { value: 'all', label: 'All topics' },
             ].map((tab) => (
               <button
                 key={tab.value}
                 type="button"
                 role="tab"
                 aria-selected={view === tab.value}
-                className={`tab h-8 ${view === tab.value ? 'tab-active !bg-primary !text-primary-content' : ''}`}
+                className={cn(
+                  'rounded-md px-3 py-1.5 text-sm font-medium transition-all',
+                  view === tab.value ? 'bg-base-300 text-white shadow' : 'text-muted hover:text-white hover:bg-base-200/50'
+                )}
                 onClick={() => setView(tab.value)}
               >
                 {tab.label}
@@ -201,53 +225,55 @@ export default function RoadmapDetail() {
       {mode === 'graph' ? (
         lanes.length > 0 || orphanNodes.length > 0 ? (
           <>
-            <p className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
-              <span className="inline-flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full border border-success bg-success/40" /> Completed
+            <div className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs font-medium text-muted bg-surface-2 inline-flex py-2 px-4 rounded-full border border-base-300">
+              <span className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-success shadow-[0_0_8px_rgba(76,203,140,0.6)]" /> Completed
               </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full border border-white bg-white/40" /> In progress
+              <span className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-info shadow-[0_0_8px_rgba(59,130,246,0.6)]" /> In progress
               </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Icon name="lock" className="h-3 w-3" /> Locked until prerequisites are done
+              <span className="flex items-center gap-2">
+                <Icon name="lock" className="h-3 w-3 text-warning" /> Locked
               </span>
-            </p>
+            </div>
             <RoadmapGraph lanes={lanes} orphanNodes={orphanNodes} nodesById={nodesById} isUnlocked={isUnlocked} onOpenNode={setSelectedNodeId} />
           </>
         ) : (
-          <p className="surface p-6 text-sm text-muted">Not enough topic data to draw a graph yet.</p>
+          <div className="surface p-8 text-center rounded-xl border border-dashed border-base-300">
+            <p className="text-sm text-muted">Not enough topic data to draw a graph yet.</p>
+          </div>
         )
       ) : view === 'milestones' ? (
-        <div className="space-y-8">
+        <div className="space-y-10">
           {milestones.map((milestone) => {
             const nodes = (milestone.nodeIds || []).map((nid) => nodesById.get(nid)).filter(Boolean);
             if (nodes.length === 0) return null;
             const done = nodes.filter((n) => n.status === 'completed').length;
             return (
-              <section key={milestone.order} aria-label={milestone.title}>
-                <div className="mb-3 flex flex-wrap items-center gap-2">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-content">
+              <section key={milestone.order} aria-label={milestone.title} className="relative">
+                <div className="mb-4 flex flex-wrap items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-primary border border-primary/30 text-sm font-bold shadow-sm">
                     {milestone.order}
                   </span>
-                  <h2 className="text-base font-semibold">{milestone.title}</h2>
-                  <Badge tone="neutral">
+                  <h2 className="text-lg font-bold text-white">{milestone.title}</h2>
+                  <Badge tone="neutral" className="ml-2 bg-surface-2 border-base-300">
                     {done}/{nodes.length} done
                   </Badge>
-                  {milestone.estimatedDurationDays > 0 && <Badge tone="neutral">~{formatDurationDays(milestone.estimatedDurationDays)}</Badge>}
+                  {milestone.estimatedDurationDays > 0 && <Badge tone="info" className="bg-info/10 text-info border-info/20">~{formatDurationDays(milestone.estimatedDurationDays)}</Badge>}
                 </div>
-                <div className="space-y-3 border-l-2 border-base-300 pl-4">{nodes.map(renderNode)}</div>
+                <div className="space-y-3 border-l-2 border-primary/20 pl-6 ml-4">{nodes.map(renderNode)}</div>
               </section>
             );
           })}
           {orphanNodes.length > 0 && (
             <section aria-label="Other topics">
-              <h2 className="mb-3 text-base font-semibold">Other topics</h2>
-              <div className="space-y-3">{orphanNodes.map(renderNode)}</div>
+              <h2 className="mb-4 text-lg font-bold text-white ml-4">Other topics</h2>
+              <div className="space-y-3 ml-4">{orphanNodes.map(renderNode)}</div>
             </section>
           )}
         </div>
       ) : (
-        <div className="space-y-3">{orderedNodes.map(renderNode)}</div>
+        <div className="space-y-4">{orderedNodes.map(renderNode)}</div>
       )}
 
       <NodeDrawer
