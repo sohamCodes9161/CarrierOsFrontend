@@ -32,9 +32,11 @@ export default function RoadmapPage() {
   const [skills, setSkills] = useState([]);
   const [roleError, setRoleError] = useState('');
   const [confirmReplace, setConfirmReplace] = useState(false);
+  const [deleteId, setDeleteId] = useState(null); // Track roadmap to delete
 
   const list = useApi(() => roadmapApi.listRoadmaps(), []);
   const generate = useAction(roadmapApi.generateRoadmap);
+  const remove = useAction(roadmapApi.deleteRoadmap);
 
   const roadmaps = list.data || [];
   const needsProfile = generate.error?.status === 400 && /career profile/i.test(generate.error.message);
@@ -63,6 +65,16 @@ export default function RoadmapPage() {
     const exists = roadmaps.some((r) => normalizeRole(r.targetRole) === normalizeRole(trimmed));
     if (exists) setConfirmReplace(true);
     else runGenerate();
+  }
+
+  async function handleConfirmDelete() {
+    if (!deleteId) return;
+    const res = await remove.run(deleteId);
+    if (res.ok) {
+      toast.success('Roadmap deleted');
+      list.reload();
+    }
+    setDeleteId(null);
   }
 
   return (
@@ -142,28 +154,40 @@ export default function RoadmapPage() {
           ) : (
             <ul className="space-y-4">
               {roadmaps.map((r) => (
-                <li key={r._id}>
-                  <Link 
-                    to={`/roadmap/${r._id}`} 
-                    className="group flex items-center gap-5 rounded-2xl border border-base-300 bg-surface p-5 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:bg-base-200/50 hover:shadow-md"
-                  >
-                    <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-content shadow-sm">
-                      <Icon name="map" className="h-6 w-6" />
+                <li key={r._id} className="group relative flex items-center gap-5 rounded-2xl border border-base-300 bg-surface p-5 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:bg-base-200/50 hover:shadow-md">
+                  <Link to={`/roadmap/${r._id}`} className="absolute inset-0 z-0 rounded-2xl" aria-label={`View ${r.targetRole} roadmap`} />
+                  
+                  <span className="relative z-10 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-content shadow-sm">
+                    <Icon name="map" className="h-6 w-6" />
+                  </span>
+                  
+                  <span className="relative z-10 min-w-0 flex-1 pointer-events-none">
+                    <span className="block truncate text-lg font-bold text-white group-hover:text-primary transition-colors">{r.targetRole}</span>
+                    <span className="mt-2 flex flex-wrap items-center gap-3">
+                      <Badge tone="info" className="bg-info/10 text-info border-info/20">
+                        <Icon name="clock" className="h-3 w-3 mr-1" />
+                        ~{formatDurationDays(r.totalEstimatedDurationDays)}
+                      </Badge>
+                      <span className="text-xs font-medium text-muted">Updated {formatDate(r.updatedAt || r.generatedAt)}</span>
                     </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-lg font-bold text-white group-hover:text-primary transition-colors">{r.targetRole}</span>
-                      <span className="mt-2 flex flex-wrap items-center gap-3">
-                        <Badge tone="info" className="bg-info/10 text-info border-info/20">
-                          <Icon name="clock" className="h-3 w-3 mr-1" />
-                          ~{formatDurationDays(r.totalEstimatedDurationDays)}
-                        </Badge>
-                        <span className="text-xs font-medium text-muted">Updated {formatDate(r.updatedAt || r.generatedAt)}</span>
-                      </span>
-                    </span>
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-base-200 transition-colors group-hover:bg-primary/20">
+                  </span>
+
+                  <div className="relative z-10 flex items-center gap-2">
+                    <button 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setDeleteId(r._id);
+                      }}
+                      className="flex h-8 w-8 items-center justify-center rounded-full text-muted hover:bg-error/20 hover:text-error transition-colors"
+                      aria-label="Delete roadmap"
+                    >
+                      <Icon name="trash-2" className="h-4 w-4" />
+                    </button>
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-base-200 transition-colors group-hover:bg-primary/20 pointer-events-none">
                       <Icon name="arrow-right" className="h-4 w-4 text-muted group-hover:text-primary" />
                     </div>
-                  </Link>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -179,6 +203,16 @@ export default function RoadmapPage() {
         danger
         onConfirm={runGenerate}
         onCancel={() => setConfirmReplace(false)}
+      />
+
+      <ConfirmDialog
+        open={!!deleteId}
+        title="Delete roadmap?"
+        description="Are you sure you want to delete this roadmap? This action cannot be undone and you will lose your progress."
+        confirmLabel={remove.loading ? 'Deleting...' : 'Delete'}
+        danger
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteId(null)}
       />
     </div>
   );

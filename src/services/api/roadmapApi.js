@@ -23,3 +23,15 @@ export async function updateNodeStatus(id, nodeId, status) {
   const data = await api.patch(`/roadmap/${encodeURIComponent(id)}/nodes/${encodeURIComponent(nodeId)}/status`, { status });
   return data.roadmap;
 }
+
+/** PATCH /roadmap/:id/nodes/:nodeId/resources { resources, practice } */
+export async function updateNodeResources(id, nodeId, payload) {
+  const data = await api.patch(`/roadmap/${encodeURIComponent(id)}/nodes/${encodeURIComponent(nodeId)}/resources`, payload);
+  return data.roadmap;
+}
+
+/** DELETE /roadmap/:id */
+export async function deleteRoadmap(id) {
+  const data = await api.delete(`/roadmap/${encodeURIComponent(id)}`);
+  return data;
+}
