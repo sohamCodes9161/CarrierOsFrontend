@@ -50,9 +50,6 @@ export default function JobSearchPage() {
     }
   }, [activeTab]);
 
-  /**
-   * Executes job search against /api/v1/job-search
-   */
   async function handleSearch(e) {
     if (e) e.preventDefault();
     setSearching(true);
@@ -69,9 +66,6 @@ export default function JobSearchPage() {
     }
   }
 
-  /**
-   * Fetches applications for the tracker view
-   */
   async function fetchTrackerData() {
     setLoadingApps(true);
     try {
@@ -93,9 +87,6 @@ export default function JobSearchPage() {
     setConvertModalOpen(true);
   }
 
-  /**
-   * Converts external posting into tracked application
-   */
   async function handleConvertSubmit() {
     if (!selectedJob) return;
     setConverting(true);
@@ -104,19 +95,20 @@ export default function JobSearchPage() {
         selectedJob._id || selectedJob.id,
         initialStatus,
         {
-          company: selectedJob.company,
-          title: selectedJob.title || selectedJob.jobTitle,
+          company: selectedJob.company || 'Unknown Company',
+          jobTitle: selectedJob.title || selectedJob.jobTitle || 'Unknown Title',
           jobUrl: selectedJob.jobUrl,
           location: selectedJob.location,
-          workplaceType: selectedJob.workplaceType,
-          employmentType: selectedJob.employmentType,
+          // Dropping workplaceType and employmentType to prevent backend enum validation crashes 
+          // (e.g. if a scraped job board returns "Full Time" instead of your strict "full-time" schema)
           salary: selectedJob.salary,
-          requiredSkills: selectedJob.requiredSkills,
         }
       );
       toast.success('Job successfully added to your application tracker!');
       setConvertModalOpen(false);
       setSelectedJob(null);
+      // Pre-fetch the tracker data so it's ready when they switch tabs
+      fetchTrackerData();
     } catch (err) {
       toast.error(err.message || 'Could not convert job to tracked application');
     } finally {
@@ -136,7 +128,6 @@ export default function JobSearchPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header with Navigation Tabs */}
       <PageHeader
         title="Live Job Search & Tracker"
         description="Search real-time jobs matched against your career profile and track your application pipeline."
@@ -165,10 +156,8 @@ export default function JobSearchPage() {
         </div>
       </PageHeader>
 
-      {/* ================= LIVE SEARCH VIEW ================= */}
       {activeTab === 'search' ? (
         <div className="space-y-6">
-          {/* Top Search & Filter Bar */}
           <Card className="p-4 bg-surface-2 border border-base-300/80 shadow-sm">
             <form onSubmit={handleSearch} className="flex flex-col gap-3 sm:flex-row">
               <div className="relative flex-1">
@@ -199,7 +188,6 @@ export default function JobSearchPage() {
             </form>
           </Card>
 
-          {/* Job Listings Grid */}
           {searching ? (
             <div className="grid gap-4 md:grid-cols-2">
               <Skeleton className="h-52 w-full rounded-2xl" />
@@ -229,7 +217,6 @@ export default function JobSearchPage() {
                     className="flex flex-col justify-between p-5 border border-base-300 bg-surface-2 hover:border-primary/50 transition-all shadow-md group"
                   >
                     <div className="space-y-4">
-                      {/* Top Header: Title, Company & Match Ring */}
                       <div className="flex items-start justify-between gap-4">
                         <div className="space-y-1">
                           <h3 className="font-bold text-white text-base group-hover:text-primary transition-colors line-clamp-2">
@@ -254,7 +241,6 @@ export default function JobSearchPage() {
                           </p>
                         </div>
 
-                        {/* Match Percentage Circle Badge */}
                         <div className="flex shrink-0 flex-col items-center justify-center h-12 w-12 rounded-full border-2 border-primary bg-surface-1 font-black text-white shadow-pop">
                           <span className="text-xs font-black">{matchPct}%</span>
                           <span className="text-[7px] uppercase tracking-wider text-muted font-bold">
@@ -263,7 +249,6 @@ export default function JobSearchPage() {
                         </div>
                       </div>
 
-                      {/* Skill Match Analysis Breakdown */}
                       <div className="space-y-2 rounded-xl bg-surface-1 p-3 border border-base-300/50">
                         <p className="text-[11px] font-bold uppercase tracking-wider text-muted flex items-center gap-1">
                           <Sparkles className="h-3 w-3 text-primary" /> Skill Match Analysis:
@@ -289,7 +274,6 @@ export default function JobSearchPage() {
                       </div>
                     </div>
 
-                    {/* Card Footer Actions */}
                     <div className="mt-5 pt-3 border-t border-base-300/60 flex items-center justify-between gap-2 flex-wrap">
                       <span className="text-xs font-semibold text-muted flex items-center gap-1">
                         <DollarSign className="h-3.5 w-3.5 text-muted/70" />
@@ -328,7 +312,6 @@ export default function JobSearchPage() {
           )}
         </div>
       ) : (
-        /* ================= PIPELINE TRACKER VIEW ================= */
         <div className="space-y-6">
           {stats && (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
@@ -393,7 +376,6 @@ export default function JobSearchPage() {
         </div>
       )}
 
-      {/* CONVERT MODAL */}
       <Modal
         isOpen={convertModalOpen}
         onClose={() => setConvertModalOpen(false)}

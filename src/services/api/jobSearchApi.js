@@ -11,11 +11,11 @@ export async function getJobPostingById(id) {
   return api.get(`/job-search/${encodeURIComponent(id)}`);
 }
 
-/** POST /job-search/convert */
+/** POST /job-applications (Redirected from the search module to the tracker module) */
 export async function convertPostingToApplication(jobId, initialStatus = 'applied', customJobData = {}) {
-  return api.post('/job-search/convert', {
-    jobId,
-    initialStatus,
-    customJobData,
+  // We send the extracted job data directly to your job applications tracker endpoint
+  return api.post('/job-applications', {
+    ...customJobData,
+    status: initialStatus,
   });
 }
