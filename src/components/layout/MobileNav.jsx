@@ -33,7 +33,13 @@ export default function MobileNav({ onNavigate }) {
               <NavLink
                 to={item.to}
                 onClick={onNavigate}
-                className={({ isActive }) => cn('rounded-btn gap-3 text-white/80', isActive && 'bg-white text-black hover:bg-white hover:text-black')}
+                className={({ isActive }) => 
+                  cn(
+                    'rounded-btn gap-3 text-white/80', 
+                    // THE FIX: Added !text-black to override DaisyUI's default active text color
+                    isActive && 'bg-white !text-black hover:bg-white hover:!text-black'
+                  )
+                }
               >
                 <Icon name={item.icon} className="h-5 w-5" />
                 {item.label}
