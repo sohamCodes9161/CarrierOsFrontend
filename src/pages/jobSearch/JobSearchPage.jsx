@@ -81,8 +81,12 @@ export default function JobSearchPage() {
         jobApplicationsApi.getJobApplications({ limit: 50 }),
         jobApplicationsApi.getApplicationStats(),
       ]);
-      setApplications(appsRes.applications || []);
-      setStats(statsRes || null);
+      
+      // THE FIX: Safely check multiple possible response shapes from your backend
+      const applicationsList = appsRes?.applications || appsRes?.data || appsRes || [];
+      setApplications(Array.isArray(applicationsList) ? applicationsList : []);
+      
+      setStats(statsRes?.data || statsRes || null);
     } catch (err) {
       toast.error('Failed to load application pipeline');
     } finally {
@@ -134,10 +138,14 @@ export default function JobSearchPage() {
 
   return (
     <div className="space-y-6">
+      {/* THE FIX: Close PageHeader early so the buttons aren't swallowed by it */}
       <PageHeader
         title="Live Job Search & Tracker"
         description="Search real-time jobs matched against your career profile and track your application pipeline."
-      >
+      />
+
+      {/* Tabs moved outside the PageHeader */}
+      <div className="flex justify-center mb-6">
         <div className="flex gap-2 rounded-full border border-base-300 bg-surface-2 p-1">
           <button
             onClick={() => setActiveTab('search')}
@@ -160,7 +168,7 @@ export default function JobSearchPage() {
             Pipeline Tracker
           </button>
         </div>
-      </PageHeader>
+      </div>
 
       {activeTab === 'search' ? (
         <div className="space-y-6">
@@ -387,7 +395,7 @@ export default function JobSearchPage() {
         </div>
       )}
 
-      {/* THE FIX: open={convertModalOpen} instead of isOpen */}
+      {/* MODAL */}
       <Modal
         open={convertModalOpen}
         onClose={() => setConvertModalOpen(false)}
