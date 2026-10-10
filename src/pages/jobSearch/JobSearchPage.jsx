@@ -387,8 +387,9 @@ export default function JobSearchPage() {
         </div>
       )}
 
+      {/* THE FIX: open={convertModalOpen} instead of isOpen */}
       <Modal
-        isOpen={convertModalOpen}
+        open={convertModalOpen}
         onClose={() => setConvertModalOpen(false)}
         title="Convert to Tracked Application"
       >
