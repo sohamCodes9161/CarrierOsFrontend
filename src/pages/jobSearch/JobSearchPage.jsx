@@ -22,7 +22,7 @@ import { useToast } from '../../context/ToastContext.jsx';
 import { APPLICATION_STATUSES } from '../../utils/constants.js';
 
 export default function JobSearchPage() {
-  const [activeTab, setActiveTab] = useState('search'); // 'search' | 'tracker'
+  const [activeTab, setActiveTab] = useState('search');
   const toast = useToast();
 
   // Search State
@@ -58,7 +58,15 @@ export default function JobSearchPage() {
         search: searchQuery, 
         location: locationQuery 
       });
-      setJobs(res.postings || []);
+      
+      // SORTING LOGIC: Sort jobs by match percentage (Highest first)
+      const sortedJobs = (res.postings || []).sort((a, b) => {
+        const matchA = a.match?.matchPercentage ?? 0;
+        const matchB = b.match?.matchPercentage ?? 0;
+        return matchB - matchA;
+      });
+      
+      setJobs(sortedJobs);
     } catch (err) {
       toast.error(err.message || 'Failed to retrieve job postings');
     } finally {
@@ -87,27 +95,25 @@ export default function JobSearchPage() {
     setConvertModalOpen(true);
   }
 
-  async function handleConvertSubmit() {
+  async function handleConvertSubmit(e) {
+    if (e) e.preventDefault();
     if (!selectedJob) return;
     setConverting(true);
     try {
       await jobSearchApi.convertPostingToApplication(
-        selectedJob._id || selectedJob.id,
+        selectedJob._id || selectedJob.id || 'external-job',
         initialStatus,
         {
           company: selectedJob.company || 'Unknown Company',
           jobTitle: selectedJob.title || selectedJob.jobTitle || 'Unknown Title',
           jobUrl: selectedJob.jobUrl,
           location: selectedJob.location,
-          // Dropping workplaceType and employmentType to prevent backend enum validation crashes 
-          // (e.g. if a scraped job board returns "Full Time" instead of your strict "full-time" schema)
           salary: selectedJob.salary,
         }
       );
       toast.success('Job successfully added to your application tracker!');
       setConvertModalOpen(false);
       setSelectedJob(null);
-      // Pre-fetch the tracker data so it's ready when they switch tabs
       fetchTrackerData();
     } catch (err) {
       toast.error(err.message || 'Could not convert job to tracked application');
@@ -298,7 +304,12 @@ export default function JobSearchPage() {
                         <Button
                           size="xs"
                           variant="primary"
-                          onClick={() => openConvertModal(job)}
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            openConvertModal(job);
+                          }}
                           className="rounded-lg text-xs flex items-center gap-1"
                         >
                           <BookmarkPlus className="h-3 w-3" /> Convert & Track
@@ -408,10 +419,10 @@ export default function JobSearchPage() {
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="ghost" onClick={() => setConvertModalOpen(false)}>
+            <Button variant="ghost" type="button" onClick={() => setConvertModalOpen(false)}>
               Cancel
             </Button>
-            <Button loading={converting} onClick={handleConvertSubmit}>
+            <Button type="button" loading={converting} onClick={handleConvertSubmit}>
               Save to Pipeline
             </Button>
           </div>
