@@ -22,7 +22,7 @@ export function updateQuizStreak() {
   if (lastDate === today) return count; // Already logged today
 
   const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-  const newCount = lastDate === yesterday ? count + 1 : 1;
+  const newCount = lastDate === yesterday ? count + 1 : 1; // Resets if more than 1 day missed
 
   localStorage.setItem(STREAK_KEY, JSON.stringify({ count: newCount, lastDate: today }));
   return newCount;
@@ -55,6 +55,7 @@ export function createSpacedProgram({ topic, roadmapId = null, nodeId = null, da
     totalDays: days,
     currentDay: 1,
     questionCount,
+    status: 'active', // Added status tracking
     startDate: startDate.toISOString(),
     nextDue: startDate.toISOString().split('T')[0], // Due today initially
     completedDays: [],
@@ -63,7 +64,6 @@ export function createSpacedProgram({ topic, roadmapId = null, nodeId = null, da
   programs.push(newProgram);
   localStorage.setItem(ACTIVE_PROGRAMS_KEY, JSON.stringify(programs));
 
-  // Request browser notification permission for daily alerts
   if ('Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission();
   }
@@ -74,20 +74,25 @@ export function createSpacedProgram({ topic, roadmapId = null, nodeId = null, da
 /**
  * Advances a program day after a quiz attempt and schedules next review date
  */
-export function completeProgramDay(topic, accuracyPercentage) {
+export function completeProgramDay(topic, accuracyPercentage = 0) {
   const programs = getActivePrograms();
   const today = new Date().toISOString().split('T')[0];
 
   const updated = programs.map((prog) => {
-    if (prog.topic.toLowerCase().trim() === topic.toLowerCase().trim()) {
+    // Only update if it matches the topic and isn't already completed
+    if (prog.topic.toLowerCase().trim() === topic.toLowerCase().trim() && prog.status !== 'completed') {
       const nextInterval = accuracyPercentage >= 80 ? 2 : 1; // Spaced interval based on accuracy
       const nextDueDate = new Date(Date.now() + nextInterval * 86400000).toISOString().split('T')[0];
+      
+      const nextDay = prog.currentDay + 1;
+      const isCompleted = nextDay > prog.totalDays;
 
       return {
         ...prog,
-        currentDay: Math.min(prog.currentDay + 1, prog.totalDays),
+        currentDay: isCompleted ? prog.totalDays : nextDay, // Cap at max days for display
         nextDue: nextDueDate,
-        completedDays: [...prog.completedDays, { date: today, accuracy: accuracyPercentage }],
+        status: isCompleted ? 'completed' : 'active',
+        completedDays: [...(prog.completedDays || []), { date: today, accuracy: accuracyPercentage }],
       };
     }
     return prog;
@@ -102,7 +107,9 @@ export function completeProgramDay(topic, accuracyPercentage) {
 export function getDuePrograms() {
   const programs = getActivePrograms();
   const today = new Date().toISOString().split('T')[0];
-  return programs.filter((p) => p.nextDue <= today && p.currentDay <= p.totalDays);
+  
+  // Filter out completed programs and check if it's due today (or overdue from missed days)
+  return programs.filter((p) => p.status !== 'completed' && p.nextDue <= today);
 }
 
 /**
