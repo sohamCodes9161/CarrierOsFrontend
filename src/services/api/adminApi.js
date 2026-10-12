@@ -1,16 +1,18 @@
-import api from './client.js'; // Assuming this points to your configured axios instance
+import {api} from './client.js'; // Assuming this points to your configured axios instance
 
 export const adminApi = {
   getStats: async () => {
-    const { data } = await api.get('/admin/stats');
-    return data.data;
+    const response = await api.get('/admin/stats');
+    // Unwraps { success: true, data: { totalUsers, stats } } -> returns { totalUsers, stats }
+    return response.data || response;
   },
   getUsers: async () => {
-    const { data } = await api.get('/admin/users');
-    return data.data.users;
+    const response = await api.get('/admin/users');
+    // Unwraps { success: true, data: { users: [...] } } -> returns [...]
+    return response.users || response.data?.users || response;
   },
   resetQuota: async (userId) => {
-    const { data } = await api.post(`/admin/users/${userId}/reset-quota`);
-    return data;
+    const response = await api.post(`/admin/users/${userId}/reset-quota`);
+    return response;
   }
 };

@@ -76,12 +76,12 @@ export default function AppRoutes() {
           </Route>
 
           {/* Admin Protected Routes (Guides/Professors) */}
-          <Route element={<AdminRoute />}>
-            <Route element={<AppLayout />}>
-              <Route path="/admin" element={<AdminDashboard />} />
-            </Route>
-          </Route>
-
+          {/* Admin Protected Routes */}
+<Route element={<AdminRoute />}>
+  <Route element={<AppLayout />}>
+    <Route path="/admin" element={<AdminDashboard />} />
+  </Route>
+</Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

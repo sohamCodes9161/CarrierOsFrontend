@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { adminApi } from '../../services/api/adminApi.js';
 import { useToast } from '../../context/ToastContext.jsx';
-import PageHeader from '../../components/common/PageHeader.jsx';
+import PageHeader from '../../components/layout/PageHeader.jsx';
 import Icon from '../../components/ui/Icon.jsx';
 import Button from '../../components/ui/Button.jsx';
 import { Skeleton } from '../../components/ui/Skeleton.jsx';
@@ -40,7 +40,6 @@ export default function AdminDashboard() {
     try {
       await adminApi.resetQuota(userId);
       toast.success(`Quota reset for ${userName}`);
-      // Refresh the user list to show the cleared usage
       loadAdminData();
     } catch (err) {
       toast.error('Failed to reset quota.');
@@ -105,32 +104,35 @@ export default function AdminDashboard() {
             <tbody>
               {users.map((user) => (
                 <tr key={user._id} className="border-base-300 hover:bg-white/[0.02]">
-                  <td className="pl-6">
+                  <td className="pl-6 py-4">
                     <p className="font-medium text-white">{user.name}</p>
                     <p className="text-xs text-muted">{user.email}</p>
                   </td>
-                  <td>
+                  <td className="py-4">
                     <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${user.role === 'admin' ? 'bg-primary/20 text-primary' : 'bg-base-300 text-muted'}`}>
                       {user.role}
                     </span>
                   </td>
-                  <td>
+                  <td className="py-4">
                     <span className="font-mono text-sm">{user.usage?.roadmaps || 0} / 2</span>
                   </td>
-                  <td>
+                  <td className="py-4">
                     <span className="font-mono text-sm">{user.usage?.interviews || 0} / 2</span>
                   </td>
-                  <td className="text-right pr-6">
-                    <Button 
-                      size="xs" 
-                      variant="outline"
-                      loading={resettingId === user._id}
-                      onClick={() => handleResetQuota(user._id, user.name)}
-                      disabled={user.role === 'admin'}
-                    >
-                      <Icon name="refresh" className="mr-1.5 h-3 w-3" />
-                      Reset Quota
-                    </Button>
+                  <td className="px-4 py-4 text-right sm:pr-6 whitespace-nowrap">
+                    <div className="flex justify-end items-center">
+                      <Button 
+                        size="xs" 
+                        variant="outline"
+                        className="text-xs px-2.5 py-1"
+                        loading={resettingId === user._id}
+                        onClick={() => handleResetQuota(user._id, user.name)}
+                        disabled={user.role === 'admin'}
+                      >
+                        <Icon name="refresh" className="mr-1 h-3 w-3 flex-shrink-0" />
+                        <span>Reset Quota</span>
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
