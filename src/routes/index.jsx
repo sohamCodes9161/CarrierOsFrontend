@@ -7,6 +7,7 @@ import AuthLayout from '../layouts/AuthLayout.jsx';
 import PublicLayout from '../layouts/PublicLayout.jsx';
 import ProtectedRoute from './ProtectedRoute.jsx';
 import PublicOnlyRoute from './PublicOnlyRoute.jsx';
+import AdminRoute from './AdminRoute.jsx'; // <-- New import
 import ScrollToTop from './ScrollToTop.jsx';
 
 const Landing = lazy(() => import('../pages/Landing.jsx'));
@@ -28,9 +29,11 @@ const RoadmapDetail = lazy(() => import('../pages/roadmap/RoadmapDetail.jsx'));
 const PortfolioEditor = lazy(() => import('../pages/portfolio/PortfolioEditor.jsx'));
 const PublicPortfolio = lazy(() => import('../pages/portfolio/PublicPortfolio.jsx'));
 
-// New Lazy-Loaded Pages
 const JobSearchPage = lazy(() => import('../pages/jobSearch/JobSearchPage.jsx'));
 const QuizPage = lazy(() => import('../pages/quiz/QuizPage.jsx'));
+
+// <-- New Lazy-Loaded Admin Page
+const AdminDashboard = lazy(() => import('../pages/admin/AdminDashboard.jsx'));
 
 export default function AppRoutes() {
   return (
@@ -51,6 +54,7 @@ export default function AppRoutes() {
 
           <Route path="/p/:slug" element={<PublicPortfolio />} />
 
+          {/* Standard Protected Routes (Students) */}
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
@@ -68,6 +72,13 @@ export default function AppRoutes() {
               <Route path="/roadmap/:id" element={<RoadmapDetail />} />
               <Route path="/portfolio" element={<PortfolioEditor />} />
               <Route path="/account" element={<Account />} />
+            </Route>
+          </Route>
+
+          {/* Admin Protected Routes (Guides/Professors) */}
+          <Route element={<AdminRoute />}>
+            <Route element={<AppLayout />}>
+              <Route path="/admin" element={<AdminDashboard />} />
             </Route>
           </Route>
 
