@@ -42,15 +42,15 @@ const FEATURES = [
 ];
 
 const STEPS = [
-  { title: 'Add your material', text: 'Analyze your resume, your GitHub profile, or take a mock interview.' },
-  { title: 'Generate your profile', text: 'CareerOS merges the results into a single career profile.' },
-  { title: 'Follow the plan', text: 'Build a roadmap for your target role and publish your portfolio.' },
+  { title: 'Aggregate your data', text: 'Analyze your resume, process your GitHub repositories, or execute a mock interview.' },
+  { title: 'Compile your profile', text: 'CareerOS merges the parsed results into a single, comprehensive career profile.' },
+  { title: 'Execute the roadmap', text: 'Generate a precision learning path for your target role and deploy your public portfolio.' },
 ];
 
 const STATS = [
-  { value: '6', label: 'Tools in one workflow' },
-  { value: '100', label: 'Point ATS & interview scoring' },
-  { value: '1', label: 'Profile built from everything' },
+  { value: '6', label: 'Integrated native tools' },
+  { value: '100', label: 'Point precision scoring' },
+  { value: '1', label: 'Unified career profile' },
 ];
 
 export default function Landing() {
@@ -67,16 +67,15 @@ export default function Landing() {
           <Reveal>
             <span className="inline-flex items-center gap-2 rounded-full border border-base-300 bg-white/[0.04] px-3.5 py-1.5 text-xs font-medium text-muted">
               <span className="h-1.5 w-1.5 rounded-full bg-success" aria-hidden="true" />
-              AI-assisted career toolkit
+              AI-driven career infrastructure
             </span>
             <h1 className="mt-5 text-4xl font-bold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl">
-              Know where you stand.
+              The Operating System
               <br />
-              Plan what to learn next.
+              for Your Career.
             </h1>
             <p className="mt-5 max-w-xl text-base leading-relaxed text-muted sm:text-lg">
-              CareerOS reviews your resume and GitHub, runs mock interviews, and turns the results into a learning
-              roadmap and a public portfolio.
+              CareerOS is an end-to-end professional development platform. Analyze your resume, evaluate your GitHub, run AI mock interviews, and generate precision learning roadmaps.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               {authed ? (
@@ -87,11 +86,11 @@ export default function Landing() {
               ) : (
                 <>
                   <Button as={Link} to="/register" size="lg">
-                    Create free account
+                    Initialize your profile
                     <Icon name="arrow-right" className="h-5 w-5" />
                   </Button>
                   <Button as={Link} to="/login" variant="outline" size="lg">
-                    Sign in
+                    System login
                   </Button>
                 </>
               )}
@@ -113,7 +112,7 @@ export default function Landing() {
               <div className="flex items-center justify-between">
                 <p className="eyebrow">Career profile</p>
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-success/25 bg-success/10 px-2.5 py-1 text-xs font-medium text-success">
-                  <span className="h-1.5 w-1.5 rounded-full bg-success" /> Developing
+                  <span className="h-1.5 w-1.5 rounded-full bg-success" /> Synchronized
                 </span>
               </div>
 
@@ -150,8 +149,8 @@ export default function Landing() {
 
             {/* Small floating chip layered over the panel for depth */}
             <div className="surface absolute -bottom-5 -left-5 hidden w-44 rotate-[-3deg] p-3.5 sm:block">
-              <p className="eyebrow">Next step</p>
-              <p className="mt-1 text-sm font-medium leading-snug text-white">Publish your portfolio</p>
+              <p className="eyebrow">System prompt</p>
+              <p className="mt-1 text-sm font-medium leading-snug text-white">Deploy your public portfolio</p>
             </div>
           </Reveal>
         </div>
@@ -160,9 +159,9 @@ export default function Landing() {
       {/* ---------- Feature grid ---------- */}
       <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
         <Reveal className="max-w-xl">
-          <p className="eyebrow mb-3">What's inside</p>
-          <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Everything in one place</h2>
-          <p className="mt-2 text-sm text-muted sm:text-base">Six tools that build on each other.</p>
+          <p className="eyebrow mb-3">System Architecture</p>
+          <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Everything in one ecosystem</h2>
+          <p className="mt-2 text-sm text-muted sm:text-base">Six native tools that build seamlessly on each other.</p>
         </Reveal>
         <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map((feature, i) => (
@@ -183,8 +182,8 @@ export default function Landing() {
       <section className="border-y border-base-300 bg-base-200/60">
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
           <Reveal className="max-w-xl">
-            <p className="eyebrow mb-3">Process</p>
-            <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">How it works</h2>
+            <p className="eyebrow mb-3">Execution flow</p>
+            <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">How CareerOS works</h2>
           </Reveal>
           <ol className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-3">
             {STEPS.map((step, index) => (
@@ -208,13 +207,13 @@ export default function Landing() {
       {!authed && (
         <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28">
           <Reveal className="surface grid-veil relative overflow-hidden px-6 py-14 text-center sm:px-12">
-            <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Start with your resume</h2>
+            <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Upgrade your career infrastructure</h2>
             <p className="mx-auto mt-2 max-w-md text-sm text-muted sm:text-base">
-              It takes a minute to sign up, and your first analysis takes less than that.
+              System initialization takes less than a minute. Boot up your first analysis today.
             </p>
             <div className="mt-7 flex justify-center">
               <Button as={Link} to="/register" size="lg">
-                Get started
+                Initialize System
                 <Icon name="arrow-right" className="h-5 w-5" />
               </Button>
             </div>
