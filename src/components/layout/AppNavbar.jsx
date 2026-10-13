@@ -12,6 +12,7 @@ const QUICK_ACTIONS = [
   { to: '/resume', label: 'Analyze a resume', icon: 'document' },
   { to: '/github', label: 'Analyze a GitHub profile', icon: 'code' },
   { to: '/roadmap', label: 'Generate a roadmap', icon: 'map' },
+  { to: '/guide', label: 'View guide', icon: 'book' }
 ];
 
 // DaisyUI dropdowns stay open while focused; blur to close after a selection.
@@ -30,6 +31,16 @@ export default function AppNavbar({ drawerId }) {
     navigate('/login', { replace: true });
   }
 
+  // Dynamically build the navigation array so we can inject the Guide and Admin routes
+  const mainNavLinks = [
+    ...NAV_ITEMS
+  ];
+
+  // Only show the Admin link if the logged-in user has the admin role
+  if (user?.role === 'admin') {
+    mainNavLinks.push({ to: '/admin', label: 'Admin' });
+  }
+
   return (
     <header className="sticky top-3 z-30 px-3 sm:top-4 sm:px-6">
       <div className="mx-auto flex h-14 max-w-7xl items-center gap-2 rounded-full border border-base-300 bg-surface-3/90 px-3 shadow-pop backdrop-blur-md">
@@ -41,14 +52,16 @@ export default function AppNavbar({ drawerId }) {
           <Logo />
         </Link>
 
+        {/* Desktop Navigation */}
         <nav aria-label="Main" className="hidden flex-1 items-center gap-0.5 lg:flex">
-          {NAV_ITEMS.map((item) => (
+          {mainNavLinks.map((item) => (
             <NavLink key={item.to} to={item.to} className={({ isActive }) => cn('nav-pill', isActive && 'nav-pill-active')}>
               {item.label}
             </NavLink>
           ))}
         </nav>
 
+        {/* Quick Actions & User Profile */}
         <div className="ml-auto flex items-center gap-1.5">
           <div className="dropdown dropdown-end">
             <div tabIndex={0} role="button" className="btn btn-primary btn-sm gap-1 rounded-full" aria-label="Quick actions">
@@ -88,8 +101,17 @@ export default function AppNavbar({ drawerId }) {
                   Account
                 </Link>
               </li>
+              {/* Fallback mobile link for Admin just in case */}
+              {user?.role === 'admin' && (
+                <li className="lg:hidden">
+                  <Link to="/admin" onClick={closeDropdown} className="rounded-btn text-primary">
+                    <Icon name="shield" className="h-4 w-4" />
+                    Admin Center
+                  </Link>
+                </li>
+              )}
               <li>
-                <button type="button" onClick={handleLogout} className="rounded-btn">
+                <button type="button" onClick={handleLogout} className="rounded-btn text-error hover:bg-error/10 hover:text-error">
                   <Icon name="logout" className="h-4 w-4" />
                   Sign out
                 </button>

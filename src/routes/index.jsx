@@ -9,7 +9,7 @@ import ProtectedRoute from './ProtectedRoute.jsx';
 import PublicOnlyRoute from './PublicOnlyRoute.jsx';
 import AdminRoute from './AdminRoute.jsx'; // <-- New import
 import ScrollToTop from './ScrollToTop.jsx';
-
+const GuidePage = lazy(() => import('../pages/GuidePage.jsx'));
 const Landing = lazy(() => import('../pages/Landing.jsx'));
 const Login = lazy(() => import('../pages/Login.jsx'));
 const Register = lazy(() => import('../pages/Register.jsx'));
@@ -58,6 +58,7 @@ export default function AppRoutes() {
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/guide" element={<GuidePage />} />
               <Route path="/resume" element={<ResumePage />} />
               <Route path="/resume/:id" element={<ResumeDetail />} />
               <Route path="/github" element={<GithubPage />} />

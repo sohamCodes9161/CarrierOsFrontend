@@ -8,6 +8,7 @@ export const NAV_ITEMS = [
   { to: '/portfolio', label: 'Portfolio', icon: 'globe' },
   { to: '/jobs', label: 'Job Tracker', icon: 'briefcase' },
   { to: '/quizzes', label: 'Adaptive Quiz', icon: 'quiz' },
+  { to: '/guide', label: 'Guide', icon: 'book' }
 ];
 
 export const DIFFICULTIES = [
