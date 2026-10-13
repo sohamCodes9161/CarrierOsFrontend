@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
-import {api} from '../../services/api/client.js'; // Adjust if your api instance is exported differently
+import api from '../../services/api/client.js';
 import Icon from '../ui/Icon.jsx';
 import { cn } from '../../utils/cn.js';
 
@@ -16,7 +16,7 @@ export default function ChatWidget() {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to bottom
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -35,22 +35,23 @@ export default function ChatWidget() {
     setIsLoading(true);
 
     try {
-      // Send the request with the context of where the user is
       const response = await api.post('/chat', {
-        messages: updatedMessages.filter(m => m.role !== 'system'), // Send only user/assistant history
+        messages: updatedMessages.filter(m => m.role !== 'system'),
         context: {
           userName: user?.name,
           page: location.pathname
         }
       });
 
-      const aiReply = response.data?.data?.reply || response.data?.reply;
-      if (aiReply) {
-        setMessages(prev => [...prev, aiReply]);
+      // Safely extract just the string content, handling both object replies or raw strings
+      const rawReply = response.data?.data?.reply || response.data?.reply;
+      const contentString = typeof rawReply === 'object' ? rawReply?.content : rawReply;
+
+      if (contentString) {
+        setMessages(prev => [...prev, { role: 'assistant', content: contentString }]);
       }
     } catch (error) {
       console.error('Chat error:', error);
-      // If rate limited, show the error message in the chat!
       const errorMsg = error.response?.data?.message || 'Sorry, I ran into an issue connecting to the server.';
       setMessages(prev => [...prev, { role: 'assistant', content: `⚠️ ${errorMsg}` }]);
     } finally {
@@ -61,32 +62,41 @@ export default function ChatWidget() {
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
       
-      {/* Chat Window */}
+      {/* Premium Glass-Morphism Chat Window */}
       {isOpen && (
-        <div className="mb-4 flex h-[450px] w-[350px] flex-col overflow-hidden rounded-2xl border border-base-300 bg-surface-1 shadow-2xl transition-all sm:w-[400px]">
+        <div className="mb-4 flex h-[520px] w-[360px] flex-col overflow-hidden rounded-[24px] border border-white/10 bg-[#0d0d0d]/95 shadow-[0_12px_40px_rgba(0,0,0,0.6)] backdrop-blur-xl transition-all sm:w-[400px]">
           
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-base-300 bg-surface-2 px-4 py-3">
-            <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/20 text-primary">
+          <div className="flex items-center justify-between border-b border-white/10 bg-white/[0.03] px-5 py-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/20 text-primary shadow-inner">
                 <Icon name="sparkles" className="h-4 w-4" />
               </div>
-              <span className="font-semibold text-white">CareerOS Mentor</span>
+              <div>
+                <h3 className="text-sm font-semibold text-white tracking-wide">CareerOS Mentor</h3>
+                <p className="text-[10px] text-emerald-400 flex items-center gap-1.5 font-medium">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  Online & Context-Aware
+                </p>
+              </div>
             </div>
-            <button onClick={() => setIsOpen(false)} className="text-muted hover:text-white transition-colors">
-              <Icon name="x" className="h-5 w-5" />
+            <button 
+              onClick={() => setIsOpen(false)} 
+              className="rounded-lg p-1.5 text-muted hover:bg-white/10 hover:text-white transition-colors"
+            >
+              <Icon name="x" className="h-4 w-4" />
             </button>
           </div>
 
           {/* Messages Area */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-surface-1">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
             {messages.map((msg, idx) => (
               <div key={idx} className={cn("flex w-full", msg.role === 'user' ? "justify-end" : "justify-start")}>
                 <div className={cn(
-                  "max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed",
+                  "max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm",
                   msg.role === 'user' 
-                    ? "bg-primary text-primary-content rounded-tr-sm" 
-                    : "bg-surface-3 border border-base-300 text-base-content rounded-tl-sm whitespace-pre-wrap"
+                    ? "bg-primary text-primary-content rounded-br-xs font-normal" 
+                    : "bg-white/[0.06] border border-white/10 text-gray-200 rounded-bl-xs whitespace-pre-wrap"
                 )}>
                   {msg.content}
                 </div>
@@ -94,8 +104,12 @@ export default function ChatWidget() {
             ))}
             {isLoading && (
               <div className="flex w-full justify-start">
-                <div className="bg-surface-3 border border-base-300 rounded-2xl rounded-tl-sm px-4 py-3">
-                  <span className="loading loading-dots loading-sm text-muted"></span>
+                <div className="bg-white/[0.06] border border-white/10 rounded-2xl rounded-bl-xs px-4 py-3">
+                  <div className="flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce"></span>
+                    <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:0.2s]"></span>
+                    <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:0.4s]"></span>
+                  </div>
                 </div>
               </div>
             )}
@@ -103,12 +117,12 @@ export default function ChatWidget() {
           </div>
 
           {/* Input Area */}
-          <form onSubmit={handleSend} className="border-t border-base-300 bg-surface-2 p-3">
+          <form onSubmit={handleSend} className="border-t border-white/10 bg-white/[0.02] p-3">
             <div className="relative flex items-center">
               <input
                 type="text"
-                placeholder="Ask a technical or career question..."
-                className="w-full rounded-full border border-base-300 bg-surface-1 pl-4 pr-12 py-2.5 text-sm text-white placeholder:text-muted focus:border-primary focus:outline-none"
+                placeholder="Ask coding or career questions..."
+                className="w-full rounded-full border border-white/10 bg-black/40 pl-4 pr-12 py-3 text-sm text-white placeholder:text-muted/70 focus:border-primary focus:bg-black/60 focus:outline-none transition-all shadow-inner"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 disabled={isLoading}
@@ -116,7 +130,7 @@ export default function ChatWidget() {
               <button 
                 type="submit" 
                 disabled={!input.trim() || isLoading}
-                className="absolute right-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-content transition-transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+                className="absolute right-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-content shadow-md transition-all hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100"
               >
                 <Icon name="arrow-up" className="h-4 w-4" />
               </button>
@@ -125,12 +139,13 @@ export default function ChatWidget() {
         </div>
       )}
 
-      {/* Floating Action Button (FAB) */}
+      {/* Floating Action Button (FAB) with Glow Effect */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-content shadow-pop shadow-primary/25 transition-transform hover:scale-110 active:scale-95"
+        className="group relative flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-content shadow-[0_0_25px_rgba(var(--primary),0.4)] transition-all duration-300 hover:scale-105 hover:shadow-[0_0_35px_rgba(var(--primary),0.6)] active:scale-95"
       >
-        <Icon name={isOpen ? "x" : "sparkles"} className="h-6 w-6" />
+        <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-500 ring-2 ring-[#0d0d0d]"></span>
+        <Icon name={isOpen ? "x" : "sparkles"} className="h-6 w-6 transition-transform duration-300 group-hover:rotate-12" />
       </button>
     </div>
   );
