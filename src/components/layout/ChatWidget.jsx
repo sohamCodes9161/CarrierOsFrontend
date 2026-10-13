@@ -43,13 +43,23 @@ export default function ChatWidget() {
         }
       });
 
-      // Safely extract just the string content, handling both object replies or raw strings
-      const rawReply = response.data?.data?.reply || response.data?.reply;
-      const contentString = typeof rawReply === 'object' ? rawReply?.content : rawReply;
+      // --- CRITICAL FIX: Safely extract the inner content string from the reply object ---
+      const responseData = response.data?.data || response.data;
+      const rawReply = responseData?.reply;
+      
+      let contentString = '';
+      if (typeof rawReply === 'string') {
+        contentString = rawReply;
+      } else if (typeof rawReply === 'object' && rawReply !== null) {
+        contentString = rawReply.content || JSON.stringify(rawReply);
+      }
 
       if (contentString) {
         setMessages(prev => [...prev, { role: 'assistant', content: contentString }]);
+      } else {
+        setMessages(prev => [...prev, { role: 'assistant', content: "⚠️ Received empty response from AI." }]);
       }
+
     } catch (error) {
       console.error('Chat error:', error);
       const errorMsg = error.response?.data?.message || 'Sorry, I ran into an issue connecting to the server.';
@@ -82,7 +92,7 @@ export default function ChatWidget() {
             </div>
             <button 
               onClick={() => setIsOpen(false)} 
-              className="rounded-lg p-1.5 text-muted hover:bg-white/10 hover:text-white transition-colors"
+              className="rounded-lg p-1.5 text-muted hover:bg-white/15 hover:text-white transition-colors"
             >
               <Icon name="x" className="h-4 w-4" />
             </button>
@@ -98,7 +108,7 @@ export default function ChatWidget() {
                     ? "bg-primary text-primary-content rounded-br-xs font-normal" 
                     : "bg-white/[0.06] border border-white/10 text-gray-200 rounded-bl-xs whitespace-pre-wrap"
                 )}>
-                  {msg.content}
+                  {typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content)}
                 </div>
               </div>
             ))}
