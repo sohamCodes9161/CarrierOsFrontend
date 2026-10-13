@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
-import api from '../../services/api/client.js';
+import {api} from '../../services/api/client.js';
 import Icon from '../ui/Icon.jsx';
 import { cn } from '../../utils/cn.js';
 
