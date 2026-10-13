@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 
 import AppNavbar from '../components/layout/AppNavbar.jsx';
 import MobileNav from '../components/layout/MobileNav.jsx';
+import ChatWidget from '../components/layout/ChatWidget.jsx';
 import { PageSkeleton } from '../components/ui/Skeleton.jsx';
 
 const DRAWER_ID = 'app-drawer';
@@ -43,6 +44,9 @@ export default function AppLayout() {
         <footer className="border-t border-base-300 py-5 text-center text-xs text-faint">
           CareerOS · AI-assisted career tools
         </footer>
+        
+        {/* --- Floating AI Chat Widget --- */}
+        <ChatWidget />
       </div>
 
       <div className="drawer-side z-40">
