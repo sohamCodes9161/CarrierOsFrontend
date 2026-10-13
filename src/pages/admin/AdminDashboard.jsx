@@ -87,12 +87,7 @@ export default function AdminDashboard() {
       <PageHeader 
         title="Admin Command Center" 
         description="Monitor system usage, aggregate AI token consumption, and manage student accounts." 
-      >
-        <Button variant="outline" size="sm" onClick={handleExportCSV}>
-          <Icon name="document" className="mr-2 h-4 w-4" />
-          Export Report
-        </Button>
-      </PageHeader>
+      />
 
       {/* Aggregate Stats Grid */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
@@ -126,15 +121,24 @@ export default function AdminDashboard() {
       <section className="surface overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-base-300 px-6 py-4 gap-4">
           <h2 className="text-lg font-semibold text-white">Student Roster & Usage</h2>
-          <div className="relative w-full sm:w-64">
-            <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
-            <input 
-              type="text" 
-              placeholder="Search students..." 
-              className="w-full bg-base-300/50 border border-base-300 rounded-md pl-9 pr-3 py-1.5 text-sm text-white placeholder:text-muted focus:outline-none focus:border-primary transition-colors"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          
+          {/* Search Bar and Export Button Container */}
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+            <div className="relative w-full sm:w-64">
+              <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
+              <input 
+                type="text" 
+                placeholder="Search students..." 
+                className="w-full bg-base-300/50 border border-base-300 rounded-md pl-9 pr-3 py-1.5 text-sm text-white placeholder:text-muted focus:outline-none focus:border-primary transition-colors"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            
+            <Button variant="outline" size="sm" onClick={handleExportCSV} className="w-full sm:w-auto flex-shrink-0">
+              <Icon name="document" className="mr-2 h-4 w-4" />
+              Export CSV
+            </Button>
           </div>
         </div>
         <div className="overflow-x-auto">
