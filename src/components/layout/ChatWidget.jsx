@@ -43,21 +43,22 @@ export default function ChatWidget() {
         }
       });
 
-      // --- CRITICAL FIX: Safely extract the inner content string from the reply object ---
-      const responseData = response.data?.data || response.data;
+      // --- CRITICAL FIX: Extract the inner .content string from the response object ---
+      const responseData = response?.data || response;
       const rawReply = responseData?.reply;
       
-      let contentString = '';
+      let textContent = '';
       if (typeof rawReply === 'string') {
-        contentString = rawReply;
+        textContent = rawReply;
       } else if (typeof rawReply === 'object' && rawReply !== null) {
-        contentString = rawReply.content || JSON.stringify(rawReply);
+        // This handles grabbing the actual message text and ignoring any AI reasoning property
+        textContent = rawReply.content || rawReply.message || JSON.stringify(rawReply);
       }
 
-      if (contentString) {
-        setMessages(prev => [...prev, { role: 'assistant', content: contentString }]);
+      if (textContent) {
+        setMessages(prev => [...prev, { role: 'assistant', content: textContent }]);
       } else {
-        setMessages(prev => [...prev, { role: 'assistant', content: "⚠️ Received empty response from AI." }]);
+        setMessages(prev => [...prev, { role: 'assistant', content: "⚠️ Received empty response format from AI." }]);
       }
 
     } catch (error) {
