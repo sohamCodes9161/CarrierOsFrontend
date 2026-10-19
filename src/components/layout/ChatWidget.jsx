@@ -5,13 +5,13 @@ import { api } from '../../services/api/client.js';
 import Icon from '../ui/Icon.jsx';
 import { cn } from '../../utils/cn.js';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 // Helper component for Code Blocks with Copy button
 function CodeBlock({ children }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
-    // Extract string content from pre children
     const codeText = children?.props?.children || children;
     const textToCopy = typeof codeText === 'string' ? codeText : String(codeText);
 
@@ -247,7 +247,10 @@ export default function ChatWidget() {
                   )}
                 >
                   {typeof message.content === 'string' ? (
-                    <ReactMarkdown components={MarkdownComponents}>
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={MarkdownComponents}
+                    >
                       {message.content}
                     </ReactMarkdown>
                   ) : (
