@@ -4,8 +4,12 @@ import Button from '../../components/ui/Button.jsx';
 import Badge from '../../components/ui/Badge.jsx';
 import { careerProfileApi, roadmapApi } from '../../services/api/index.js';
 import { createSpacedProgram } from '../../utils/quizSpacedEngine.js';
+import { useAuth } from '../../context/AuthContext.jsx';
 
 export default function QuizGeneratorForm({ onStartQuiz, loading, history = [], initialTopic = '' }) {
+  const { user } = useAuth();
+  const userId = user?._id || user?.id;
+
   const [creationMode, setCreationMode] = useState('custom'); // 'custom' | 'roadmap'
   const [topic, setTopic] = useState(initialTopic || 'System Architecture');
   const [questionCount, setQuestionCount] = useState(5);
@@ -109,7 +113,7 @@ export default function QuizGeneratorForm({ onStartQuiz, loading, history = [], 
     }
   }
 
-function handleSubmit(e) {
+  function handleSubmit(e) {
     e.preventDefault();
     if (!topic.trim()) return;
 
@@ -130,7 +134,7 @@ function handleSubmit(e) {
     }
 
     if (programDays !== '1') {
-      createSpacedProgram({
+      createSpacedProgram(userId, {
         ...payload,
         days: Number(programDays),
       });

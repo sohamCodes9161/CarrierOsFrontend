@@ -1,13 +1,14 @@
 // LocalStorage keys for client-side persistence of active practice programs & streaks
-const STREAK_KEY = 'career_os_quiz_streak';
-const ACTIVE_PROGRAMS_KEY = 'career_os_quiz_programs';
+const getStreakKey = (userId) => `career_os_quiz_streak_${userId}`;
+const getProgramsKey = (userId) => `career_os_quiz_programs_${userId}`;
 
 /**
  * Calculates or updates the user's daily quiz streak
  */
-export function getQuizStreakData() {
+export function getQuizStreakData(userId) {
+  if (!userId) return { count: 0, lastDate: null };
   try {
-    const raw = localStorage.getItem(STREAK_KEY);
+    const raw = localStorage.getItem(getStreakKey(userId));
     if (!raw) return { count: 0, lastDate: null };
     return JSON.parse(raw);
   } catch {
@@ -15,25 +16,27 @@ export function getQuizStreakData() {
   }
 }
 
-export function updateQuizStreak() {
+export function updateQuizStreak(userId) {
+  if (!userId) return 0;
   const today = new Date().toISOString().split('T')[0];
-  const { count, lastDate } = getQuizStreakData();
+  const { count, lastDate } = getQuizStreakData(userId);
 
   if (lastDate === today) return count; // Already logged today
 
   const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
   const newCount = lastDate === yesterday ? count + 1 : 1; // Resets if more than 1 day missed
 
-  localStorage.setItem(STREAK_KEY, JSON.stringify({ count: newCount, lastDate: today }));
+  localStorage.setItem(getStreakKey(userId), JSON.stringify({ count: newCount, lastDate: today }));
   return newCount;
 }
 
 /**
  * Get active multi-day (e.g. 10-day) spaced repetition programs
  */
-export function getActivePrograms() {
+export function getActivePrograms(userId) {
+  if (!userId) return [];
   try {
-    const raw = localStorage.getItem(ACTIVE_PROGRAMS_KEY);
+    const raw = localStorage.getItem(getProgramsKey(userId));
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
@@ -43,8 +46,9 @@ export function getActivePrograms() {
 /**
  * Creates a new Multi-Day Spaced Program (e.g. 10-Day Spaced Repetition)
  */
-export function createSpacedProgram({ topic, roadmapId = null, nodeId = null, days = 10, questionCount = 5 }) {
-  const programs = getActivePrograms();
+export function createSpacedProgram(userId, { topic, roadmapId = null, nodeId = null, days = 10, questionCount = 5 }) {
+  if (!userId) return null;
+  const programs = getActivePrograms(userId);
   const startDate = new Date();
 
   const newProgram = {
@@ -62,7 +66,7 @@ export function createSpacedProgram({ topic, roadmapId = null, nodeId = null, da
   };
 
   programs.push(newProgram);
-  localStorage.setItem(ACTIVE_PROGRAMS_KEY, JSON.stringify(programs));
+  localStorage.setItem(getProgramsKey(userId), JSON.stringify(programs));
 
   if ('Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission();
@@ -74,8 +78,9 @@ export function createSpacedProgram({ topic, roadmapId = null, nodeId = null, da
 /**
  * Advances a program day after a quiz attempt and schedules next review date
  */
-export function completeProgramDay(topic, accuracyPercentage = 0) {
-  const programs = getActivePrograms();
+export function completeProgramDay(userId, topic, accuracyPercentage = 0) {
+  if (!userId) return;
+  const programs = getActivePrograms(userId);
   const today = new Date().toISOString().split('T')[0];
 
   const updated = programs.map((prog) => {
@@ -98,14 +103,15 @@ export function completeProgramDay(topic, accuracyPercentage = 0) {
     return prog;
   });
 
-  localStorage.setItem(ACTIVE_PROGRAMS_KEY, JSON.stringify(updated));
+  localStorage.setItem(getProgramsKey(userId), JSON.stringify(updated));
 }
 
 /**
  * Returns programs that are due for daily practice today
  */
-export function getDuePrograms() {
-  const programs = getActivePrograms();
+export function getDuePrograms(userId) {
+  if (!userId) return [];
+  const programs = getActivePrograms(userId);
   const today = new Date().toISOString().split('T')[0];
   
   // Filter out completed programs and check if it's due today (or overdue from missed days)
