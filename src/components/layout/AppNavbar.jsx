@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 
 import Icon from '../ui/Icon.jsx';
@@ -20,10 +21,25 @@ function closeDropdown() {
   if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
 }
 
-/** Floating pill navbar: detached from the top edge, dark surface, hairline border. */
 export default function AppNavbar({ drawerId }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  // --- Theme Toggle State & Effect ---
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem('careeros_theme') || 'careeros'
+  );
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.style.backgroundColor = theme === 'careeros-light' ? '#F8FAFC' : '#050505';
+    localStorage.setItem('careeros_theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prevTheme) => (prevTheme === 'careeros' ? 'careeros-light' : 'careeros'));
+  };
+  // -----------------------------------
 
   async function handleLogout() {
     closeDropdown();
@@ -31,12 +47,8 @@ export default function AppNavbar({ drawerId }) {
     navigate('/login', { replace: true });
   }
 
-  // Dynamically build the navigation array so we can inject the Guide and Admin routes
-  const mainNavLinks = [
-    ...NAV_ITEMS
-  ];
+  const mainNavLinks = [...NAV_ITEMS];
 
-  // Only show the Admin link if the logged-in user has the admin role
   if (user?.role === 'admin') {
     mainNavLinks.push({ to: '/admin', label: 'Admin' });
   }
@@ -62,7 +74,17 @@ export default function AppNavbar({ drawerId }) {
         </nav>
 
         {/* Quick Actions & User Profile */}
-        <div className="ml-auto flex items-center gap-1.5">
+        <div className="ml-auto flex items-center gap-2">
+          
+          {/* THEME TOGGLE BUTTON */}
+          <button
+            onClick={toggleTheme}
+            className="btn btn-ghost btn-circle btn-sm text-muted hover:text-base-content transition-colors"
+            aria-label="Toggle theme"
+          >
+            <Icon name={theme === 'careeros' ? 'sun' : 'moon'} className="h-4 w-4" />
+          </button>
+
           <div className="dropdown dropdown-end">
             <div tabIndex={0} role="button" className="btn btn-primary btn-sm gap-1 rounded-full" aria-label="Quick actions">
               <Icon name="plus" className="h-4 w-4" />
@@ -86,13 +108,13 @@ export default function AppNavbar({ drawerId }) {
 
           <div className="dropdown dropdown-end">
             <div tabIndex={0} role="button" className="btn btn-ghost btn-circle btn-sm" aria-label="Account menu">
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-xs font-semibold text-black">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-base-content text-xs font-semibold text-base-100">
                 {initials(user?.name)}
               </span>
             </div>
             <ul tabIndex={0} className="menu dropdown-content z-50 mt-2 w-64 rounded-box border border-base-300 bg-surface-3 p-2 shadow-pop">
               <li className="pointer-events-none px-3 py-2">
-                <p className="truncate text-sm font-semibold text-white">{user?.name}</p>
+                <p className="truncate text-sm font-semibold text-base-content">{user?.name}</p>
                 <p className="truncate text-xs text-muted">{user?.email}</p>
               </li>
               <li>
@@ -101,7 +123,6 @@ export default function AppNavbar({ drawerId }) {
                   Account
                 </Link>
               </li>
-              {/* Fallback mobile link for Admin just in case */}
               {user?.role === 'admin' && (
                 <li className="lg:hidden">
                   <Link to="/admin" onClick={closeDropdown} className="rounded-btn text-primary">

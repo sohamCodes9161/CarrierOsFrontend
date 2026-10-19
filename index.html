@@ -1,11 +1,10 @@
 <!doctype html>
-<html lang="en" data-theme="careeros">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#050505" />
-    <meta name="color-scheme" content="dark" />
     <meta name="description" content="CareerOS: The Operating System for Your Career. Architect your professional growth with AI-assisted resume analysis, mock interviews, and precision learning roadmaps." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -14,13 +13,16 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
     />
     <title>CareerOS: The Operating System for Your Career</title>
-    <style>
-      /* Avoid a white flash before the stylesheet loads */
-      html,
-      body {
-        background: #050505;
-      }
-    </style>
+    
+    <!-- Script to prevent Flash of Unstyled Theme (FOUC) -->
+    <script>
+      (function() {
+        const savedTheme = localStorage.getItem('careeros_theme') || 'careeros';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        // Ensure background matches the theme immediately
+        document.documentElement.style.backgroundColor = savedTheme === 'careeros-light' ? '#F8FAFC' : '#050505';
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
