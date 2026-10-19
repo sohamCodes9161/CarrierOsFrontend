@@ -6,6 +6,40 @@ import Icon from '../ui/Icon.jsx';
 import { cn } from '../../utils/cn.js';
 import ReactMarkdown from 'react-markdown';
 
+// Helper component for Code Blocks with Copy button
+function CodeBlock({ children }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    // Extract string content from pre children
+    const codeText = children?.props?.children || children;
+    const textToCopy = typeof codeText === 'string' ? codeText : String(codeText);
+
+    navigator.clipboard.writeText(textToCopy);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="relative group my-3 rounded-xl border border-white/10 bg-black/80 overflow-hidden">
+      <div className="flex items-center justify-between bg-white/5 px-3 py-1.5 border-b border-white/10 text-[10px] font-mono text-muted">
+        <span>code</span>
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="flex items-center gap-1 text-[10px] text-muted hover:text-white transition-colors bg-white/10 px-2 py-0.5 rounded-md"
+        >
+          <Icon name={copied ? 'check' : 'copy'} className="h-3 w-3" />
+          {copied ? 'Copied!' : 'Copy'}
+        </button>
+      </div>
+      <pre className="p-3 max-w-full overflow-x-auto font-mono text-xs text-emerald-400 custom-scrollbar leading-relaxed">
+        {children}
+      </pre>
+    </div>
+  );
+}
+
 export default function ChatWidget() {
   const { user } = useAuth();
   const location = useLocation();
@@ -24,7 +58,6 @@ export default function ChatWidget() {
 
   const messagesEndRef = useRef(null);
 
-  // Automatically scroll to the latest message.
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({
       behavior: 'smooth',
@@ -35,7 +68,6 @@ export default function ChatWidget() {
     e?.preventDefault();
 
     const messageText = input.trim();
-
     if (!messageText || isLoading) return;
 
     const userMessage = {
@@ -83,8 +115,6 @@ export default function ChatWidget() {
           },
         ]);
       } else {
-        console.error('Unexpected chat API response:', response);
-
         setMessages((previousMessages) => [
           ...previousMessages,
           {
@@ -95,8 +125,6 @@ export default function ChatWidget() {
         ]);
       }
     } catch (error) {
-      console.error('Chat error:', error);
-
       const errorMessage =
         error?.message ||
         'Sorry, I ran into an issue connecting to the server.';
@@ -113,17 +141,13 @@ export default function ChatWidget() {
     }
   }
 
-  // Custom Markdown Renderers for structured formatting inside the chat bubble
+  // Custom Markdown Renderers with formatted tables and copy button
   const MarkdownComponents = {
     p({ children }) {
       return <p className="mb-2 last:mb-0 leading-relaxed">{children}</p>;
     },
     pre({ children }) {
-      return (
-        <pre className="my-2 max-w-full overflow-x-auto rounded-xl border border-white/10 bg-black/60 p-3 font-mono text-xs text-emerald-400 custom-scrollbar">
-          {children}
-        </pre>
-      );
+      return <CodeBlock>{children}</CodeBlock>;
     },
     code({ inline, className, children, ...props }) {
       if (inline) {
@@ -140,18 +164,27 @@ export default function ChatWidget() {
     },
     table({ children }) {
       return (
-        <div className="my-2 max-w-full overflow-x-auto rounded-lg border border-white/10">
-          <table className="w-full text-left text-xs text-gray-300">
+        <div className="my-3 max-w-full overflow-x-auto rounded-xl border border-white/15 bg-black/40">
+          <table className="w-full text-left text-xs text-gray-200 border-collapse">
             {children}
           </table>
         </div>
       );
     },
+    thead({ children }) {
+      return <thead className="bg-white/10 text-white font-semibold">{children}</thead>;
+    },
+    tbody({ children }) {
+      return <tbody className="divide-y divide-white/10">{children}</tbody>;
+    },
+    tr({ children }) {
+      return <tr className="hover:bg-white/5 transition-colors">{children}</tr>;
+    },
     th({ children }) {
-      return <th className="border-b border-white/10 bg-white/5 p-2 font-semibold text-white">{children}</th>;
+      return <th className="p-2.5 font-semibold text-white border-b border-white/15 whitespace-nowrap">{children}</th>;
     },
     td({ children }) {
-      return <td className="border-b border-white/5 p-2">{children}</td>;
+      return <td className="p-2.5 text-gray-300">{children}</td>;
     },
     ul({ children }) {
       return <ul className="mb-2 list-disc pl-4 space-y-1">{children}</ul>;
