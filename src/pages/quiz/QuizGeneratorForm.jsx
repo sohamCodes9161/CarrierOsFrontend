@@ -5,7 +5,7 @@ import Badge from '../../components/ui/Badge.jsx';
 import { careerProfileApi, roadmapApi } from '../../services/api/index.js';
 import { createSpacedProgram } from '../../utils/quizSpacedEngine.js';
 import { useAuth } from '../../context/AuthContext.jsx';
-
+import Icon from '../../components/ui/Icon.jsx';
 export default function QuizGeneratorForm({ onStartQuiz, loading, history = [], initialTopic = '' }) {
   const { user } = useAuth();
   const userId = user?._id || user?.id;
