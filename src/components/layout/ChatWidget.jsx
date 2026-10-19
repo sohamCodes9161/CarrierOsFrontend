@@ -61,19 +61,12 @@ export default function ChatWidget() {
         },
       });
 
-      // The API client already unwraps payload.data.
-      // Expected response:
-      // { reply: { role: 'assistant', content: '...', reasoning: '...' } }
       const rawReply = response?.reply;
-
       let textContent = '';
 
       if (typeof rawReply === 'string') {
         textContent = rawReply;
-      } else if (
-        rawReply &&
-        typeof rawReply === 'object'
-      ) {
+      } else if (rawReply && typeof rawReply === 'object') {
         if (typeof rawReply.content === 'string') {
           textContent = rawReply.content;
         } else if (typeof rawReply.message === 'string') {
@@ -90,10 +83,7 @@ export default function ChatWidget() {
           },
         ]);
       } else {
-        console.error(
-          'Unexpected chat API response:',
-          response
-        );
+        console.error('Unexpected chat API response:', response);
 
         setMessages((previousMessages) => [
           ...previousMessages,
@@ -123,19 +113,64 @@ export default function ChatWidget() {
     }
   }
 
+  // Custom Markdown Renderers for structured formatting inside the chat bubble
+  const MarkdownComponents = {
+    p({ children }) {
+      return <p className="mb-2 last:mb-0 leading-relaxed">{children}</p>;
+    },
+    pre({ children }) {
+      return (
+        <pre className="my-2 max-w-full overflow-x-auto rounded-xl border border-white/10 bg-black/60 p-3 font-mono text-xs text-emerald-400 custom-scrollbar">
+          {children}
+        </pre>
+      );
+    },
+    code({ inline, className, children, ...props }) {
+      if (inline) {
+        return (
+          <code
+            className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-xs text-primary"
+            {...props}
+          >
+            {children}
+          </code>
+        );
+      }
+      return <code className="font-mono text-xs" {...props}>{children}</code>;
+    },
+    table({ children }) {
+      return (
+        <div className="my-2 max-w-full overflow-x-auto rounded-lg border border-white/10">
+          <table className="w-full text-left text-xs text-gray-300">
+            {children}
+          </table>
+        </div>
+      );
+    },
+    th({ children }) {
+      return <th className="border-b border-white/10 bg-white/5 p-2 font-semibold text-white">{children}</th>;
+    },
+    td({ children }) {
+      return <td className="border-b border-white/5 p-2">{children}</td>;
+    },
+    ul({ children }) {
+      return <ul className="mb-2 list-disc pl-4 space-y-1">{children}</ul>;
+    },
+    ol({ children }) {
+      return <ol className="mb-2 list-decimal pl-4 space-y-1">{children}</ol>;
+    },
+  };
+
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
       {/* Chat window */}
       {isOpen && (
-        <div className="mb-4 flex h-[520px] w-[360px] flex-col overflow-hidden rounded-[24px] border border-white/10 bg-[#0d0d0d]/95 shadow-[0_12px_40px_rgba(0,0,0,0.6)] backdrop-blur-xl transition-all sm:w-[400px]">
+        <div className="mb-4 flex h-[520px] w-[360px] flex-col overflow-hidden rounded-[24px] border border-white/10 bg-[#0d0d0d]/95 shadow-[0_12px_40px_rgba(0,0,0,0.6)] backdrop-blur-xl transition-all sm:w-[420px]">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-white/10 bg-white/[0.03] px-5 py-4">
             <div className="flex items-center gap-3">
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/20 text-primary shadow-inner">
-                <Icon
-                  name="sparkles"
-                  className="h-4 w-4"
-                />
+                <Icon name="sparkles" className="h-4 w-4" />
               </div>
 
               <div>
@@ -167,24 +202,24 @@ export default function ChatWidget() {
                 key={index}
                 className={cn(
                   'flex w-full',
-                  message.role === 'user'
-                    ? 'justify-end'
-                    : 'justify-start'
+                  message.role === 'user' ? 'justify-end' : 'justify-start'
                 )}
               >
                 <div
                   className={cn(
-                    'max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm',
+                    'max-w-[88%] rounded-2xl px-4 py-3 text-sm shadow-sm break-words overflow-hidden',
                     message.role === 'user'
                       ? 'rounded-br-xs bg-primary font-normal text-primary-content'
-                      : 'rounded-bl-xs border border-white/10 bg-white/[0.06] text-gray-200 whitespace-pre-wrap'
+                      : 'rounded-bl-xs border border-white/10 bg-white/[0.06] text-gray-200'
                   )}
                 >
-    {typeof message.content === 'string' ? (
-  <ReactMarkdown>{message.content}</ReactMarkdown>
-) : (
-  JSON.stringify(message.content)
-)}
+                  {typeof message.content === 'string' ? (
+                    <ReactMarkdown components={MarkdownComponents}>
+                      {message.content}
+                    </ReactMarkdown>
+                  ) : (
+                    JSON.stringify(message.content)
+                  )}
                 </div>
               </div>
             ))}
@@ -226,10 +261,7 @@ export default function ChatWidget() {
                 disabled={!input.trim() || isLoading}
                 className="absolute right-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-content shadow-md transition-all hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100"
               >
-                <Icon
-                  name="arrow-up"
-                  className="h-4 w-4"
-                />
+                <Icon name="arrow-up" className="h-4 w-4" />
               </button>
             </div>
           </form>
