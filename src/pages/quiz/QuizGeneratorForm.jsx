@@ -1,297 +1,367 @@
-import { useState, useEffect } from 'react';
-import Card from '../../components/ui/Card.jsx';
-import Button from '../../components/ui/Button.jsx';
-import Badge from '../../components/ui/Badge.jsx';
-import { careerProfileApi, roadmapApi } from '../../services/api/index.js';
-import { createSpacedProgram } from '../../utils/quizSpacedEngine.js';
+import { useState, useRef, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { api } from '../../services/api/client.js';
+import Icon from '../ui/Icon.jsx';
+import { cn } from '../../utils/cn.js';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 
-export default function QuizGeneratorForm({ onStartQuiz, loading, history = [], initialTopic = '' }) {
-  const { user } = useAuth();
-  const userId = user?._id || user?.id;
+// 1. Helper component for Code Blocks with Copy button
+function CodeBlock({ children }) {
+  const [copied, setCopied] = useState(false);
 
-  const [creationMode, setCreationMode] = useState('custom'); // 'custom' | 'roadmap'
-  const [topic, setTopic] = useState(initialTopic || 'System Architecture');
-  const [questionCount, setQuestionCount] = useState(5);
-  const [roadmapId, setRoadmapId] = useState('');
-  const [nodeId, setNodeId] = useState('');
-  const [programDays, setProgramDays] = useState('1'); // '1' = single session, '10' = 10-day program
+  const handleCopy = () => {
+    const codeText = children?.props?.children || children;
+    const textToCopy = typeof codeText === 'string' ? codeText : String(codeText);
 
-  const [profileSkills, setProfileSkills] = useState([]);
-  const [roadmaps, setRoadmaps] = useState([]);
-  const [roadmapNodes, setRoadmapNodes] = useState([]);
-  const [loadingRoadmaps, setLoadingRoadmaps] = useState(false);
-  const [loadingNodes, setLoadingNodes] = useState(false);
-
-  // Load Profile Skills & Roadmaps on Mount
-  useEffect(() => {
-    async function loadMetadata() {
-      setLoadingRoadmaps(true);
-      try {
-        const [profileRes, roadmapRes] = await Promise.allSettled([
-          careerProfileApi.getProfile(),
-          roadmapApi.listRoadmaps(),
-        ]);
-
-        if (profileRes.status === 'fulfilled' && profileRes.value?.skills) {
-          setProfileSkills(profileRes.value.skills);
-        }
-
-        if (roadmapRes.status === 'fulfilled') {
-          const raw = roadmapRes.value;
-          const list = Array.isArray(raw) ? raw : raw?.roadmaps || [];
-          setRoadmaps(list);
-        }
-      } catch (err) {
-        console.error('Failed to load metadata:', err);
-      } finally {
-        setLoadingRoadmaps(false);
-      }
-    }
-    loadMetadata();
-  }, []);
-
-  // Re-fetch roadmaps if user switches to 'roadmap' mode and list is empty
-  useEffect(() => {
-    if (creationMode === 'roadmap' && roadmaps.length === 0) {
-      setLoadingRoadmaps(true);
-      roadmapApi.listRoadmaps()
-        .then((res) => {
-          const list = Array.isArray(res) ? res : res?.roadmaps || [];
-          setRoadmaps(list);
-        })
-        .catch((err) => console.error('Error fetching roadmaps:', err))
-        .finally(() => setLoadingRoadmaps(false));
-    }
-  }, [creationMode, roadmaps.length]);
-
-  // Fetch roadmap nodes dynamically when a roadmap is selected
-  useEffect(() => {
-    if (!roadmapId) {
-      setRoadmapNodes([]);
-      setNodeId('');
-      return;
-    }
-
-    setLoadingNodes(true);
-    roadmapApi.getRoadmap(roadmapId)
-      .then((roadmap) => {
-        const nodes = roadmap?.nodes || [];
-        setRoadmapNodes(nodes);
-      })
-      .catch(() => setRoadmapNodes([]))
-      .finally(() => setLoadingNodes(false));
-
-    setNodeId('');
-  }, [roadmapId]);
-
-  function handleNodeChange(selectedNodeId) {
-    setNodeId(selectedNodeId);
-    if (selectedNodeId) {
-      const nodeObj = roadmapNodes.find((n) => (n._id || n.id) === selectedNodeId);
-      if (nodeObj && (nodeObj.title || nodeObj.label || nodeObj.skill)) {
-        setTopic(nodeObj.title || nodeObj.label || nodeObj.skill);
-      }
-    }
-  }
-
-  // Calculate adaptive difficulty tier
-  const pastAttempts = history.filter(
-    (h) => h.topic?.toLowerCase().trim() === topic.toLowerCase().trim()
-  );
-  const totalAttempts = pastAttempts.length;
-  const avgAccuracy = totalAttempts > 0
-    ? pastAttempts.reduce((acc, curr) => acc + (curr.accuracyPercentage || 0), 0) / totalAttempts
-    : 0;
-
-  let estimatedTier = { label: 'Easy (Baseline)', variant: 'info' };
-  if (totalAttempts > 0) {
-    if (avgAccuracy >= 80 || totalAttempts >= 4) {
-      estimatedTier = { label: 'Mastery Tier (Hard/Medium)', variant: 'error' };
-    } else if (avgAccuracy >= 60 || totalAttempts >= 2) {
-      estimatedTier = { label: 'Balanced Tier (Medium/Easy)', variant: 'warning' };
-    }
-  }
-
-  function handleSubmit(e) {
-    e.preventDefault();
-    if (!topic.trim()) return;
-
-    // Base payload with mandatory fields
-    const payload = {
-      topic: topic.trim(),
-      questionCount: Number(questionCount),
-    };
-
-    // Only attach roadmapId if it's a valid non-empty string
-    if (roadmapId && typeof roadmapId === 'string' && roadmapId.trim() !== '') {
-      payload.roadmapId = roadmapId.trim();
-    }
-
-    // Only attach nodeId if it's a valid non-empty string
-    if (nodeId && typeof nodeId === 'string' && nodeId.trim() !== '') {
-      payload.nodeId = nodeId.trim();
-    }
-
-    if (programDays !== '1') {
-      createSpacedProgram(userId, {
-        ...payload,
-        days: Number(programDays),
-      });
-    }
-
-    onStartQuiz(payload);
-  }
+    navigator.clipboard.writeText(textToCopy);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
-    <Card className="mx-auto max-w-2xl p-6 sm:p-8 space-y-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-base-300 pb-4">
-        <div>
-          <h3 className="text-xl font-bold text-white">Create Adaptive Quiz</h3>
-          <p className="text-xs text-muted">Generate instant practice sessions or multi-day mastery programs</p>
-        </div>
-        <Badge variant={estimatedTier.variant} className="px-3 py-1 text-xs self-start sm:self-auto">
-          {estimatedTier.label}
-        </Badge>
-      </div>
-
-      {/* Mode Selector */}
-      <div className="grid grid-cols-2 gap-2 rounded-xl border border-base-300 bg-surface-1 p-1">
+    <div className="relative group my-3 rounded-xl border border-white/10 bg-black/80 overflow-hidden">
+      <div className="flex items-center justify-between bg-white/5 px-3 py-1.5 border-b border-white/10 text-[10px] font-mono text-muted">
+        <span>code</span>
         <button
           type="button"
-          onClick={() => setCreationMode('custom')}
-          className={`btn btn-sm rounded-lg ${creationMode === 'custom' ? 'btn-primary' : 'btn-ghost'}`}
+          onClick={handleCopy}
+          className="flex items-center gap-1 text-[10px] text-muted hover:text-white transition-colors bg-white/10 px-2 py-0.5 rounded-md"
         >
-          Custom Skill / Topic
-        </button>
-        <button
-          type="button"
-          onClick={() => setCreationMode('roadmap')}
-          className={`btn btn-sm rounded-lg ${creationMode === 'roadmap' ? 'btn-primary' : 'btn-ghost'}`}
-        >
-          From Roadmap Node
+          <Icon name={copied ? 'check' : 'copy'} className="h-3 w-3" />
+          {copied ? 'Copied!' : 'Copy'}
         </button>
       </div>
+      <pre className="p-3 max-w-full overflow-x-auto font-mono text-xs text-emerald-400 custom-scrollbar leading-relaxed">
+        {children}
+      </pre>
+    </div>
+  );
+}
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        {creationMode === 'custom' ? (
-          <div>
-            <label className="label text-xs font-semibold text-white">Topic Name</label>
-            <input
-              type="text"
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              placeholder="e.g. System Architecture, React Hooks, Node.js Event Loop"
-              className="input input-bordered w-full rounded-xl bg-surface-1"
-              required
-            />
+// 2. Helper component for Table Blocks with Copy button
+function TableBlock({ children }) {
+  const [copied, setCopied] = useState(false);
+  const tableRef = useRef(null);
 
-            {profileSkills.length > 0 && (
-              <div className="mt-3 space-y-1.5">
-                <span className="text-[11px] font-medium text-muted">Quick select from Profile Skills:</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {profileSkills.map((skill) => (
-                    <button
-                      key={skill}
-                      type="button"
-                      onClick={() => setTopic(skill)}
-                      className={`btn btn-xs rounded-lg ${
-                        topic.toLowerCase() === skill.toLowerCase()
-                          ? 'btn-primary'
-                          : 'btn-ghost border border-base-300 bg-surface-2 text-muted'
-                      }`}
-                    >
-                      {skill}
-                    </button>
-                  ))}
+  const handleCopy = () => {
+    if (tableRef.current) {
+      // Copies the clean text content of the table
+      navigator.clipboard.writeText(tableRef.current.innerText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  return (
+    <div className="relative group my-3 max-w-full overflow-hidden rounded-xl border border-white/15 bg-black/40">
+      <div className="flex items-center justify-between bg-white/5 px-3 py-1.5 border-b border-white/10 text-[10px] font-mono text-muted">
+        <span>table</span>
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="flex items-center gap-1 text-[10px] text-muted hover:text-white transition-colors bg-white/10 px-2 py-0.5 rounded-md"
+        >
+          <Icon name={copied ? 'check' : 'copy'} className="h-3 w-3" />
+          {copied ? 'Copied!' : 'Copy'}
+        </button>
+      </div>
+      <div className="overflow-x-auto custom-scrollbar" ref={tableRef}>
+        <table className="w-full text-left text-xs text-gray-200 border-collapse">
+          {children}
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// 3. Helper component for Full Message Copy button
+function MessageCopyButton({ content }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="mt-3 flex justify-end border-t border-white/10 pt-2">
+      <button
+        type="button"
+        onClick={handleCopy}
+        className="flex items-center gap-1.5 text-[10px] font-medium text-muted hover:text-white transition-colors"
+      >
+        <Icon name={copied ? 'check' : 'copy'} className="h-3 w-3" />
+        {copied ? 'Full response copied!' : 'Copy full response'}
+      </button>
+    </div>
+  );
+}
+
+export default function ChatWidget() {
+  const { user } = useAuth();
+  const location = useLocation();
+
+  const [isOpen, setIsOpen] = useState(false);
+  const [messages, setMessages] = useState([
+    {
+      role: 'assistant',
+      content: `Hi ${
+        user?.name?.split(' ')[0] || 'there'
+      }! I'm your CareerOS AI Mentor. Ask me any coding, resume, or career questions!`,
+    },
+  ]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({
+      behavior: 'smooth',
+    });
+  }, [messages, isOpen]);
+
+  async function handleSend(e) {
+    e?.preventDefault();
+
+    const messageText = input.trim();
+    if (!messageText || isLoading) return;
+
+    const userMessage = {
+      role: 'user',
+      content: messageText,
+    };
+
+    const updatedMessages = [...messages, userMessage];
+
+    setMessages(updatedMessages);
+    setInput('');
+    setIsLoading(true);
+
+    try {
+      const response = await api.post('/chat', {
+        messages: updatedMessages
+          .filter((message) => message.role !== 'system')
+          .map(({ role, content }) => ({ role, content })),
+
+        context: {
+          userName: user?.name,
+          page: location.pathname,
+        },
+      });
+
+      const rawReply = response?.reply;
+      let textContent = '';
+
+      if (typeof rawReply === 'string') {
+        textContent = rawReply;
+      } else if (rawReply && typeof rawReply === 'object') {
+        if (typeof rawReply.content === 'string') {
+          textContent = rawReply.content;
+        } else if (typeof rawReply.message === 'string') {
+          textContent = rawReply.message;
+        }
+      }
+
+      if (textContent.trim()) {
+        setMessages((previousMessages) => [
+          ...previousMessages,
+          {
+            role: 'assistant',
+            content: textContent,
+          },
+        ]);
+      } else {
+        setMessages((previousMessages) => [
+          ...previousMessages,
+          {
+            role: 'assistant',
+            content:
+              '⚠️ The AI returned an empty or unexpected response. Please try again.',
+          },
+        ]);
+      }
+    } catch (error) {
+      const errorMessage =
+        error?.message ||
+        'Sorry, I ran into an issue connecting to the server.';
+
+      setMessages((previousMessages) => [
+        ...previousMessages,
+        {
+          role: 'assistant',
+          content: `⚠️ ${errorMessage}`,
+        },
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  const MarkdownComponents = {
+    p({ children }) {
+      return <p className="mb-2 last:mb-0 leading-relaxed">{children}</p>;
+    },
+    pre({ children }) {
+      return <CodeBlock>{children}</CodeBlock>;
+    },
+    code({ inline, className, children, ...props }) {
+      if (inline) {
+        return (
+          <code
+            className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-xs text-primary"
+            {...props}
+          >
+            {children}
+          </code>
+        );
+      }
+      return <code className="font-mono text-xs" {...props}>{children}</code>;
+    },
+    table({ children }) {
+      return <TableBlock>{children}</TableBlock>;
+    },
+    thead({ children }) {
+      return <thead className="bg-white/10 text-white font-semibold">{children}</thead>;
+    },
+    tbody({ children }) {
+      return <tbody className="divide-y divide-white/10">{children}</tbody>;
+    },
+    tr({ children }) {
+      return <tr className="hover:bg-white/5 transition-colors">{children}</tr>;
+    },
+    th({ children }) {
+      return <th className="p-2.5 font-semibold text-white border-b border-white/15 whitespace-nowrap">{children}</th>;
+    },
+    td({ children }) {
+      return <td className="p-2.5 text-gray-300 align-top">{children}</td>;
+    },
+    ul({ children }) {
+      return <ul className="mb-2 list-disc pl-4 space-y-1">{children}</ul>;
+    },
+    ol({ children }) {
+      return <ol className="mb-2 list-decimal pl-4 space-y-1">{children}</ol>;
+    },
+  };
+
+  return (
+    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+      {isOpen && (
+        <div className="mb-4 flex h-[520px] w-[360px] flex-col overflow-hidden rounded-[24px] border border-white/10 bg-[#0d0d0d]/95 shadow-[0_12px_40px_rgba(0,0,0,0.6)] backdrop-blur-xl transition-all sm:w-[420px]">
+          <div className="flex items-center justify-between border-b border-white/10 bg-white/[0.03] px-5 py-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/20 text-primary shadow-inner">
+                <Icon name="sparkles" className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold tracking-wide text-white">
+                  CareerOS Mentor
+                </h3>
+                <p className="flex items-center gap-1.5 text-[10px] font-medium text-emerald-400">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+                  Online & Context-Aware
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="rounded-lg p-1.5 text-muted transition-colors hover:bg-white/15 hover:text-white"
+            >
+              <Icon name="x" className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="custom-scrollbar flex-1 space-y-4 overflow-y-auto p-4">
+            {messages.map((message, index) => (
+              <div
+                key={index}
+                className={cn(
+                  'flex w-full',
+                  message.role === 'user' ? 'justify-end' : 'justify-start'
+                )}
+              >
+                <div
+                  className={cn(
+                    'max-w-[90%] rounded-2xl px-4 py-3 text-sm shadow-sm break-words overflow-hidden',
+                    message.role === 'user'
+                      ? 'rounded-br-xs bg-primary font-normal text-primary-content'
+                      : 'rounded-bl-xs border border-white/10 bg-white/[0.06] text-gray-200'
+                  )}
+                >
+                  {typeof message.content === 'string' ? (
+                    <>
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        rehypePlugins={[rehypeRaw]}
+                        components={MarkdownComponents}
+                      >
+                        {message.content}
+                      </ReactMarkdown>
+                      
+                      {/* Attach the Full Response copy button ONLY to assistant messages */}
+                      {message.role === 'assistant' && (
+                        <MessageCopyButton content={message.content} />
+                      )}
+                    </>
+                  ) : (
+                    JSON.stringify(message.content)
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {isLoading && (
+              <div className="flex w-full justify-start">
+                <div className="rounded-2xl rounded-bl-xs border border-white/10 bg-white/[0.06] px-4 py-3">
+                  <div className="flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary" />
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary [animation-delay:0.2s]" />
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary [animation-delay:0.4s]" />
+                  </div>
                 </div>
               </div>
             )}
+            <div ref={messagesEndRef} />
           </div>
-        ) : (
-          <div className="space-y-4">
-            <div>
-              <label className="label text-xs font-semibold text-white">Select Roadmap</label>
-              <select
-                value={roadmapId}
-                onChange={(e) => setRoadmapId(e.target.value)}
-                disabled={loadingRoadmaps}
-                className="select select-bordered w-full rounded-xl bg-surface-1"
-                required
+
+          <form onSubmit={handleSend} className="border-t border-white/10 bg-white/[0.02] p-3">
+            <div className="relative flex items-center">
+              <input
+                type="text"
+                placeholder="Ask coding or career questions..."
+                className="w-full rounded-full border border-white/10 bg-black/40 py-3 pl-4 pr-12 text-sm text-white shadow-inner transition-all placeholder:text-muted/70 focus:border-primary focus:bg-black/60 focus:outline-none"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                disabled={isLoading}
+              />
+              <button
+                type="submit"
+                disabled={!input.trim() || isLoading}
+                className="absolute right-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-content shadow-md transition-all hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100"
               >
-                <option value="">
-                  {loadingRoadmaps
-                    ? 'Loading roadmaps...'
-                    : roadmaps.length === 0
-                    ? 'No roadmaps found in account'
-                    : 'Choose a Roadmap from your account...'}
-                </option>
-                {roadmaps.map((rm) => (
-                  <option key={rm._id || rm.id} value={rm._id || rm.id}>
-                    {rm.title || rm.targetRole || 'Saved Roadmap'}
-                  </option>
-                ))}
-              </select>
+                <Icon name="arrow-up" className="h-4 w-4" />
+              </button>
             </div>
-
-            {roadmapId && (
-              <div>
-                <label className="label text-xs font-semibold text-white">Select Specific Node</label>
-                <select
-                  value={nodeId}
-                  onChange={(e) => handleNodeChange(e.target.value)}
-                  disabled={loadingNodes}
-                  className="select select-bordered w-full rounded-xl bg-surface-1 text-xs"
-                >
-                  <option value="">
-                    {loadingNodes ? 'Loading nodes...' : 'Whole Roadmap / Broad Concept'}
-                  </option>
-                  {roadmapNodes.map((node) => {
-                    const id = node._id || node.id;
-                    const title = node.title || node.label || node.skill || 'Node';
-                    return (
-                      <option key={id} value={id}>
-                        {title}
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
-            )}
-          </div>
-        )}
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="label text-xs font-semibold text-white">Questions Per Quiz</label>
-            <select
-              value={questionCount}
-              onChange={(e) => setQuestionCount(e.target.value)}
-              className="select select-bordered w-full rounded-xl bg-surface-1"
-            >
-              <option value={3}>3 Questions (Quick Practice)</option>
-              <option value={5}>5 Questions (Standard)</option>
-              <option value={10}>10 Questions (Deep Assessment)</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="label text-xs font-semibold text-white">Learning Program</label>
-            <select
-              value={programDays}
-              onChange={(e) => setProgramDays(e.target.value)}
-              className="select select-bordered w-full rounded-xl bg-surface-1"
-            >
-              <option value="1">Single Session (Instant Assessment)</option>
-              <option value="10">10-Day Spaced Repetition Program</option>
-            </select>
-          </div>
+          </form>
         </div>
+      )}
 
-        <Button type="submit" loading={loading} className="w-full rounded-xl py-3 text-base font-semibold">
-          {programDays !== '1' ? 'Launch 10-Day Mastery Program' : 'Start Adaptive Quiz Now'}
-        </Button>
-      </form>
-    </Card>
+      <button
+        type="button"
+        onClick={() => setIsOpen((previous) => !previous)}
+        className="group relative flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-content shadow-[0_0_25px_rgba(var(--primary),0.4)] transition-all duration-300 hover:scale-105 hover:shadow-[0_0_35px_rgba(var(--primary),0.6)] active:scale-95"
+      >
+        <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-500 ring-2 ring-[#0d0d0d]" />
+        <Icon
+          name={isOpen ? 'x' : 'sparkles'}
+          className="h-6 w-6 transition-transform duration-300 group-hover:rotate-12"
+        />
+      </button>
+    </div>
   );
 }
