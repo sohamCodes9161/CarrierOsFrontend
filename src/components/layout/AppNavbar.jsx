@@ -16,7 +16,6 @@ const QUICK_ACTIONS = [
   { to: '/guide', label: 'View guide', icon: 'book' }
 ];
 
-// DaisyUI dropdowns stay open while focused; blur to close after a selection.
 function closeDropdown() {
   if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
 }
@@ -25,7 +24,6 @@ export default function AppNavbar({ drawerId }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  // --- Theme Toggle State & Effect ---
   const [theme, setTheme] = useState(
     () => localStorage.getItem('careeros_theme') || 'careeros'
   );
@@ -39,7 +37,6 @@ export default function AppNavbar({ drawerId }) {
   const toggleTheme = () => {
     setTheme((prevTheme) => (prevTheme === 'careeros' ? 'careeros-light' : 'careeros'));
   };
-  // -----------------------------------
 
   async function handleLogout() {
     closeDropdown();
@@ -76,13 +73,29 @@ export default function AppNavbar({ drawerId }) {
         {/* Quick Actions & User Profile */}
         <div className="ml-auto flex items-center gap-2">
           
-          {/* THEME TOGGLE BUTTON */}
+          {/* THEME TOGGLE BUTTON - Fixed Visibility */}
           <button
             onClick={toggleTheme}
-            className="btn btn-ghost btn-circle btn-sm text-muted hover:text-base-content transition-colors"
+            className="btn btn-circle btn-sm border border-base-300 bg-base-200 text-base-content hover:bg-base-300"
             aria-label="Toggle theme"
           >
-            <Icon name={theme === 'careeros' ? 'sun' : 'moon'} className="h-4 w-4" />
+            {theme === 'careeros' ? (
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+              </svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+              </svg>
+            )}
           </button>
 
           <div className="dropdown dropdown-end">
