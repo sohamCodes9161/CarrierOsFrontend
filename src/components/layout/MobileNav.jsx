@@ -35,7 +35,7 @@ export default function MobileNav({ onNavigate }) {
                 onClick={onNavigate}
                 className={({ isActive }) => 
                   cn(
-                    'rounded-btn gap-3 text-white/80', 
+                    'rounded-btn gap-3 text-base-content/80', 
                     // THE FIX: Added !text-black to override DaisyUI's default active text color
                     isActive && 'bg-white !text-black hover:bg-white hover:!text-black'
                   )
@@ -50,7 +50,7 @@ export default function MobileNav({ onNavigate }) {
       </nav>
 
       <div className="mt-4 border-t border-base-300 pt-4">
-        <p className="truncate text-sm font-semibold text-white">{user?.name}</p>
+        <p className="truncate text-sm font-semibold text-base-content">{user?.name}</p>
         <p className="mb-3 truncate text-xs text-muted">{user?.email}</p>
         <div className="flex gap-2">
           <NavLink to="/account" onClick={onNavigate} className="btn btn-outline btn-sm flex-1 rounded-full">

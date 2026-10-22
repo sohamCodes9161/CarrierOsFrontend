@@ -39,7 +39,7 @@ export default function Modal({ open, onClose, title, children, actions, size = 
         )}
       >
         <div className="flex items-start justify-between gap-4">
-          <h3 id={titleId} className="text-lg font-semibold text-white">
+          <h3 id={titleId} className="text-lg font-semibold text-base-content">
             {title}
           </h3>
           <button

@@ -65,11 +65,11 @@ export default function GuidePage() {
     <div className="mx-auto max-w-6xl space-y-16 pb-16">
       
       {/* Hero Section */}
-      <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#0d0d0d]/80 px-8 py-16 sm:px-16 text-center shadow-2xl">
+      <section className="relative overflow-hidden rounded-3xl border border-base-content/10 bg-base-100 px-8 py-16 sm:px-16 text-center shadow-pop">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(var(--primary),0.15),transparent_50%)]" />
         <div className="relative z-10 mx-auto max-w-2xl">
-          <h1 className="mb-4 text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
-            How to use <span className="bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent">CareerOS</span>
+          <h1 className="mb-4 text-4xl font-extrabold tracking-tight text-base-content sm:text-5xl">
+            How to use <span className="bg-gradient-to-r from-base-content to-primary bg-clip-text text-transparent">CareerOS</span>
           </h1>
           <p className="text-lg text-muted">
             Your all-in-one AI platform to optimize your profile, ace interviews, and land your dream tech job.
@@ -80,19 +80,19 @@ export default function GuidePage() {
       {/* The Core Workflow */}
       <section>
         <div className="mb-8 text-center">
-          <h2 className="text-2xl font-bold text-white">The Recommended Workflow</h2>
+          <h2 className="text-2xl font-bold text-base-content">The Recommended Workflow</h2>
           <p className="mt-2 text-sm text-muted">Follow these three steps to get the most out of the platform.</p>
         </div>
         <div className="grid gap-6 md:grid-cols-3">
           {workflowSteps.map((item, idx) => (
-            <div key={idx} className="relative flex flex-col rounded-2xl border border-base-300 bg-surface-1 p-8 transition-transform hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/5">
-              <span className="absolute -top-4 right-6 text-6xl font-black text-white/[0.03] select-none">
+            <div key={idx} className="relative flex flex-col rounded-2xl border border-base-300 bg-base-100 p-8 shadow-card transition-transform hover:-translate-y-1">
+              <span className="absolute -top-4 right-6 text-6xl font-black text-base-content/[0.03] select-none">
                 {item.step}
               </span>
               <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
                 <Icon name={item.icon} className="h-6 w-6" />
               </div>
-              <h3 className="mb-3 text-lg font-bold text-white">{item.title}</h3>
+              <h3 className="mb-3 text-lg font-bold text-base-content">{item.title}</h3>
               <p className="text-sm leading-relaxed text-muted">{item.description}</p>
             </div>
           ))}
@@ -102,16 +102,16 @@ export default function GuidePage() {
       {/* Feature Deep Dive */}
       <section>
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-white">Feature Directory</h2>
+          <h2 className="text-2xl font-bold text-base-content">Feature Directory</h2>
           <p className="mt-2 text-sm text-muted">Detailed explanations of every tool at your disposal.</p>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((feature, idx) => (
-            <div key={idx} className="group flex flex-col justify-between rounded-xl border border-base-300 bg-surface-1 p-6 transition-colors hover:border-white/20 hover:bg-white/[0.02]">
+            <div key={idx} className="group flex flex-col justify-between rounded-xl border border-base-300 bg-base-100 p-6 shadow-card transition-colors hover:border-base-content/20 hover:bg-base-content/[0.02]">
               <div>
                 <div className="mb-4 flex items-center gap-3">
                   <Icon name={feature.icon} className={`h-5 w-5 ${feature.color}`} />
-                  <h3 className="font-semibold text-white">{feature.title}</h3>
+                  <h3 className="font-semibold text-base-content">{feature.title}</h3>
                 </div>
                 <p className="text-sm text-muted">{feature.description}</p>
               </div>
@@ -121,9 +121,9 @@ export default function GuidePage() {
       </section>
 
       {/* Help Banner */}
-      <section className="flex flex-col items-center justify-between gap-6 rounded-2xl border border-primary/20 bg-primary/5 p-8 sm:flex-row sm:px-12">
+      <section className="flex flex-col items-center justify-between gap-6 rounded-2xl border border-primary/25 bg-primary/5 p-8 shadow-card sm:flex-row sm:px-12">
         <div>
-          <h3 className="text-lg font-bold text-white">Still have questions?</h3>
+          <h3 className="text-lg font-bold text-base-content">Still have questions?</h3>
           <p className="mt-1 text-sm text-muted">Use the AI Mentor chat in the bottom right corner of your screen to ask specific questions about any page you are on.</p>
         </div>
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-primary-content">

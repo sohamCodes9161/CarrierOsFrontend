@@ -31,7 +31,7 @@ export default function ScoreRing({ value, size = 72, label = 'Score', className
           style={{ transition: 'stroke-dashoffset 700ms cubic-bezier(0.22, 0.7, 0.2, 1)' }}
         />
       </svg>
-      <span className="absolute font-semibold tabular-nums text-white" style={{ fontSize: Math.round(size * 0.28) }}>
+      <span className="absolute font-semibold tabular-nums text-base-content" style={{ fontSize: Math.round(size * 0.28) }}>
         {Math.round(clamped)}
       </span>
     </div>

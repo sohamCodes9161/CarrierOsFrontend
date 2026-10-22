@@ -21,7 +21,7 @@ export default function PipelineJobCard({ app, onStatusChange, onDelete }) {
       </button>
 
       <div className="pr-6">
-        <h4 className="font-bold text-white text-sm leading-tight line-clamp-2">
+        <h4 className="font-bold text-base-content text-sm leading-tight line-clamp-2">
           {app.jobUrl ? (
             <a href={app.jobUrl} target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors inline-flex items-center gap-1">
               {app.jobTitle} <ExternalLink className="h-3 w-3 opacity-50" />
@@ -41,7 +41,7 @@ export default function PipelineJobCard({ app, onStatusChange, onDelete }) {
         <select
           value={app.status}
           onChange={(e) => onStatusChange(app._id, e.target.value)}
-          className="select select-bordered select-xs h-7 min-h-0 text-[11px] font-semibold rounded-lg bg-surface-1 text-white border-base-300 cursor-pointer focus:border-primary"
+          className="select select-bordered select-xs h-7 min-h-0 text-[11px] font-semibold rounded-lg bg-surface-1 text-base-content border-base-300 cursor-pointer focus:border-primary"
         >
           {APPLICATION_STATUSES.map((s) => (
             <option key={s.key} value={s.key}>

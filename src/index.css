@@ -5,7 +5,6 @@
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
-    color-scheme: dark;
   }
   body {
     @apply bg-page text-base-content antialiased;
@@ -15,73 +14,69 @@
   h2,
   h3,
   h4 {
-    @apply tracking-tight text-white;
+    /* FIXED: Changed from text-base-content to text-base-content */
+    @apply tracking-tight text-base-content;
     font-weight: 700;
   }
   :focus-visible {
-    @apply outline outline-2 outline-offset-2 outline-white/70;
+    /* FIXED: Adapts to theme instead of being forced white */
+    @apply outline outline-2 outline-offset-2 outline-base-content/50;
   }
   ::selection {
-    background: rgb(255 255 255 / 0.16);
+    @apply bg-base-content/20;
   }
-  /* Thin, unobtrusive scrollbars fit the editorial dark look better than the OS default. */
+  /* Scrollbars now adapt using your custom CSS variables */
   * {
     scrollbar-width: thin;
-    scrollbar-color: #303030 transparent;
+    scrollbar-color: var(--line-2) transparent;
   }
   *::-webkit-scrollbar {
     width: 10px;
     height: 10px;
   }
   *::-webkit-scrollbar-thumb {
-    background: #242424;
+    background: var(--surface-3);
     border-radius: 999px;
-    border: 2px solid #050505;
+    border: 2px solid var(--page);
   }
   *::-webkit-scrollbar-thumb:hover {
-    background: #303030;
+    background: var(--line-2);
   }
 }
 
 @layer components {
-  /* Base surface used for cards and panels: raised, hairline border, soft inner highlight. */
   .surface {
     @apply relative rounded-box border border-base-300 bg-base-100 shadow-card;
   }
 
-  /* Loading placeholder blocks */
   .sk {
     @apply animate-pulse rounded bg-base-300/60;
   }
 
-  /* Top navigation pills */
+  /* FIXED: Nav pills now adapt cleanly to light and dark mode */
   .nav-pill {
-    @apply relative inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-sm font-medium text-muted transition-colors duration-200 hover:bg-white/[0.06] hover:text-white;
+    @apply relative inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-sm font-medium text-muted transition-colors duration-200 hover:bg-base-content/10 hover:text-base-content;
   }
   .nav-pill-active {
-    @apply bg-white text-black hover:bg-white hover:text-black;
+    @apply bg-base-content text-base-100 hover:bg-base-content hover:text-base-100;
   }
 
-  /* Small label used above sections */
   .eyebrow {
     @apply text-xs font-semibold uppercase tracking-[0.14em] text-faint;
   }
 
-  /* Large numeric display (stat blocks, metrics) */
+  /* FIXED: Stat figures (like 80/100) are no longer forced to text-base-content */
   .stat-figure {
-    @apply font-semibold tabular-nums tracking-tight text-white;
+    @apply font-semibold tabular-nums tracking-tight text-base-content;
   }
 }
 
 /* ---------- Subtle 3D interactions ---------- */
-
-/* Cards: CSS-only lift (used for clickable list items) */
 .lift {
   transition: transform 260ms cubic-bezier(0.22, 0.7, 0.2, 1), box-shadow 260ms cubic-bezier(0.22, 0.7, 0.2, 1),
     border-color 260ms ease, background-color 260ms ease;
 }
 
-/* Cards: pointer-following tilt (used by <Tilt />) */
 .tilt {
   --rx: 0deg;
   --ry: 0deg;
@@ -94,33 +89,32 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
+  /* FIXED: Card hover states now use variables so they look good in light mode too */
   .lift:hover {
     transform: perspective(1000px) translateY(-5px) rotateX(1.4deg) scale(1.012);
-    box-shadow: 0 0 0 1px rgb(255 255 255 / 0.08) inset, 0 28px 48px -20px rgb(0 0 0 / 0.85);
-    border-color: rgb(255 255 255 / 0.16);
-    background-color: #101010;
+    box-shadow: 0 28px 48px -20px rgb(0 0 0 / 0.15);
+    border-color: var(--line-2);
+    background-color: var(--surface-3);
   }
   .tilt:hover {
     --ty: -5px;
     --sc: 1.012;
-    box-shadow: 0 0 0 1px rgb(255 255 255 / 0.08) inset, 0 28px 48px -20px rgb(0 0 0 / 0.85);
-    border-color: rgb(255 255 255 / 0.16);
-    background-color: #101010;
+    box-shadow: 0 28px 48px -20px rgb(0 0 0 / 0.15);
+    border-color: var(--line-2);
+    background-color: var(--surface-3);
   }
 
-  /* Buttons: hover lift */
   .btn:not(:disabled):not(.btn-disabled):not(.btn-ghost):not(.btn-link):hover {
     transform: translateY(-1px) scale(1.02);
   }
   .btn-primary:not(:disabled):not(.btn-disabled):hover {
-    box-shadow: 0 10px 24px -10px rgb(255 255 255 / 0.35);
+    box-shadow: 0 10px 24px -10px rgb(0 0 0 / 0.15);
   }
   .nav-pill:hover {
     transform: translateY(-1px);
   }
 }
 
-/* Buttons: press-down */
 .btn {
   transition: transform 180ms cubic-bezier(0.22, 0.7, 0.2, 1), box-shadow 180ms ease, background-color 180ms ease,
     border-color 180ms ease, color 180ms ease;
@@ -133,7 +127,6 @@
   transition: transform 200ms ease, background-color 200ms ease, color 200ms ease;
 }
 
-/* Image zoom inside cards */
 .zoom-img {
   transition: transform 500ms cubic-bezier(0.22, 0.7, 0.2, 1);
 }
@@ -141,21 +134,14 @@
   transform: scale(1.045);
 }
 
-/* Recording indicator */
 @keyframes rec-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.35;
-  }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
 }
 .rec-dot {
   animation: rec-pulse 1.2s ease-in-out infinite;
 }
 
-/* ---------- Scroll reveal (marketing surfaces only; see <Reveal>) ---------- */
 [data-reveal] {
   opacity: 0;
   transform: translateY(18px);
@@ -166,25 +152,17 @@
   transform: translateY(0);
 }
 
-/* ---------- Magnetic button nudge (opt-in via <Magnetic>) ---------- */
 .magnetic {
   transform: translate(var(--mx, 0px), var(--my, 0px));
   transition: transform 150ms ease-out;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .lift,
-  .tilt,
-  .btn,
-  .nav-pill,
-  .zoom-img,
-  .magnetic,
-  [data-reveal] {
+  .lift, .tilt, .btn, .nav-pill, .zoom-img, .magnetic, [data-reveal] {
     transition: none !important;
     transform: none !important;
   }
-  .rec-dot,
-  .sk {
+  .rec-dot, .sk {
     animation: none !important;
   }
   [data-reveal] {
@@ -195,27 +173,14 @@
   }
 }
 
-/*
- * Tailwind ships a `.collapse` utility (visibility: collapse) that shares its name with
- * DaisyUI's accordion component. Make sure the component always wins so collapsible
- * sections (feedback, resources, previous answers) can never be hidden by the utility.
- */
 .collapse:not(td):not(tr):not(colgroup) {
   visibility: visible;
 }
-
-/*
- * `sr-only` text is absolutely positioned, so a scroll container that is not itself
- * positioned does not clip it and it can create page-level horizontal scroll
- * (e.g. the check/cross cells in the repository health table).
- */
 .overflow-x-auto {
   position: relative;
 }
-
-/* Faint dot-grid used behind hero / empty-state surfaces. GPU-friendly (background only). */
 .grid-veil {
-  background-image: radial-gradient(rgb(255 255 255 / 0.06) 1px, transparent 1px);
+  background-image: radial-gradient(var(--line-2) 1px, transparent 1px);
   background-size: 22px 22px;
   -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 40%, transparent 100%);
   mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 40%, transparent 100%);

@@ -42,6 +42,7 @@ export default function InterviewNew() {
     return {
       role: role.length < 2 ? 'Enter the role you’re interviewing for (at least 2 characters).' : role.length > 100 ? 'Role must be 100 characters or fewer.' : '',
       totalQuestions: !Number.isInteger(count) || count < 1 || count > 20 ? 'Choose a whole number from 1 to 20.' : '',
+      targetSkills: values.targetSkills.length === 0 ? 'Please add at least one focus skill (press Enter to add).' : '',
     };
   }
 
@@ -143,7 +144,7 @@ export default function InterviewNew() {
             <p className="mt-1.5 text-xs text-muted">{DIFFICULTIES.find((d) => d.value === values.difficulty)?.hint}</p>
           </fieldset>
 
-          <FormField id="targetSkills" label="Focus skills (optional)" hint="Press Enter after each skill. Up to 15.">
+          <FormField id="targetSkills" label="Focus skills" required error={errors.targetSkills} hint="Press Enter after each skill. Up to 15.">
             <TagInput
               id="targetSkills"
               value={values.targetSkills}

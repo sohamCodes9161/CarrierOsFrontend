@@ -112,7 +112,7 @@ export default function LiveSearchTab() {
       ) : jobs.length === 0 ? (
         <Card className="p-12 text-center text-muted border border-dashed border-base-300">
           <Briefcase className="mx-auto h-12 w-12 text-muted/50 mb-3" />
-          <p className="text-base font-semibold text-white">No jobs found</p>
+          <p className="text-base font-semibold text-base-content">No jobs found</p>
           <p className="text-xs text-muted mt-1">Try adjusting your search query.</p>
         </Card>
       ) : (
@@ -128,7 +128,7 @@ export default function LiveSearchTab() {
                 <div className="space-y-4">
                   <div className="flex items-start justify-between gap-4">
                     <div className="space-y-1">
-                      <h3 className="font-bold text-white text-base group-hover:text-primary transition-colors line-clamp-2">
+                      <h3 className="font-bold text-base-content text-base group-hover:text-primary transition-colors line-clamp-2">
                         {job.jobUrl ? (
                           <a href={job.jobUrl} target="_blank" rel="noopener noreferrer" className="hover:underline inline-flex items-center gap-1.5">
                             <span>{titleText}</span>
@@ -137,12 +137,12 @@ export default function LiveSearchTab() {
                         ) : titleText}
                       </h3>
                       <p className="text-xs text-muted font-medium flex items-center gap-1.5">
-                        <strong className="text-white">{job.company}</strong>
+                        <strong className="text-base-content">{job.company}</strong>
                         <span>•</span>
                         <span>{job.location || 'Remote'}</span>
                       </p>
                     </div>
-                    <div className="flex shrink-0 flex-col items-center justify-center h-12 w-12 rounded-full border-2 border-primary bg-surface-1 font-black text-white shadow-pop">
+                    <div className="flex shrink-0 flex-col items-center justify-center h-12 w-12 rounded-full border-2 border-primary bg-surface-1 font-black text-base-content shadow-pop">
                       <span className="text-xs font-black">{matchPct}%</span>
                       <span className="text-[7px] uppercase tracking-wider text-muted font-bold">Match</span>
                     </div>
@@ -187,10 +187,10 @@ export default function LiveSearchTab() {
       <Modal open={convertModalOpen} onClose={() => setConvertModalOpen(false)} title="Convert to Tracked Application">
         <div className="space-y-4">
           <p className="text-sm text-muted">
-            Track <strong className="text-white">{selectedJob?.title || selectedJob?.jobTitle}</strong> at <strong className="text-white">{selectedJob?.company}</strong> in your active job application tracker.
+            Track <strong className="text-base-content">{selectedJob?.title || selectedJob?.jobTitle}</strong> at <strong className="text-base-content">{selectedJob?.company}</strong> in your active job application tracker.
           </p>
           <div>
-            <label className="label text-xs font-semibold text-white">Select Initial Pipeline Stage</label>
+            <label className="label text-xs font-semibold text-base-content">Select Initial Pipeline Stage</label>
             <select value={initialStatus} onChange={(e) => setInitialStatus(e.target.value)} className="select select-bordered w-full rounded-xl bg-surface-1 text-sm">
               {APPLICATION_STATUSES.map((st) => (
                 <option key={st.key} value={st.key}>{st.label}</option>

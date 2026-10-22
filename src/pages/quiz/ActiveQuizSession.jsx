@@ -98,7 +98,7 @@ export default function ActiveQuizSession({ quiz, onSubmit, submitting }) {
       {/* Session Progress Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-base-300 bg-surface-2 p-4">
         <div>
-          <h3 className="font-bold text-white">{quiz.topic}</h3>
+          <h3 className="font-bold text-base-content">{quiz.topic}</h3>
           <p className="text-xs text-muted">
             Question {currentIdx + 1} of {quiz.questions.length} • Difficulty: {currentQ.difficulty || quiz.difficultyLevel}
           </p>
@@ -127,7 +127,7 @@ export default function ActiveQuizSession({ quiz, onSubmit, submitting }) {
       {/* Main Question Card */}
       <Card className="p-6 space-y-6">
         <div className="flex items-start justify-between gap-3">
-          <h4 className="text-lg font-semibold text-white">{currentQ.questionText}</h4>
+          <h4 className="text-lg font-semibold text-base-content">{currentQ.questionText}</h4>
           <Badge variant="ghost" className="capitalize text-xs">
             {currentQ.difficulty || 'standard'}
           </Badge>
@@ -144,7 +144,7 @@ export default function ActiveQuizSession({ quiz, onSubmit, submitting }) {
                 className={`btn justify-start text-left rounded-xl p-4 transition-all ${
                   isSelected
                     ? 'btn-primary shadow-pop'
-                    : 'btn-ghost border border-base-300 bg-surface-1 hover:bg-surface-3 text-white'
+                    : 'btn-ghost border border-base-300 bg-surface-1 hover:bg-surface-3 text-base-content'
                 }`}
               >
                 <span className="mr-3 flex h-6 w-6 items-center justify-center rounded-full border border-current text-xs font-bold">

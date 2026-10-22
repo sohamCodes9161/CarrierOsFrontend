@@ -93,7 +93,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
         <div className="surface flex flex-col p-5">
           <p className="text-xs font-medium text-muted">Total Users</p>
-          <p className="mt-2 text-2xl font-bold text-white">{stats?.totalUsers || 0}</p>
+          <p className="mt-2 text-2xl font-bold text-base-content">{stats?.totalUsers || 0}</p>
         </div>
         <div className="surface flex flex-col p-5">
           <p className="text-xs font-medium text-muted">Interviews</p>
@@ -120,7 +120,7 @@ export default function AdminDashboard() {
       {/* User Management Table */}
       <section className="surface overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-base-300 px-6 py-4 gap-4">
-          <h2 className="text-lg font-semibold text-white">Student Roster & Usage</h2>
+          <h2 className="text-lg font-semibold text-base-content">Student Roster & Usage</h2>
           
           {/* Search Bar and Export Button Container */}
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
@@ -129,7 +129,7 @@ export default function AdminDashboard() {
               <input 
                 type="text" 
                 placeholder="Search students..." 
-                className="w-full bg-base-300/50 border border-base-300 rounded-md pl-9 pr-3 py-1.5 text-sm text-white placeholder:text-muted focus:outline-none focus:border-primary transition-colors"
+                className="w-full bg-base-300/50 border border-base-300 rounded-md pl-9 pr-3 py-1.5 text-sm text-base-content placeholder:text-muted focus:outline-none focus:border-primary transition-colors"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -155,9 +155,9 @@ export default function AdminDashboard() {
             </thead>
             <tbody>
               {filteredUsers.map((user) => (
-                <tr key={user._id} className="border-base-300 hover:bg-white/[0.02]">
+                <tr key={user._id} className="border-base-300 hover:bg-base-content/[0.02]">
                   <td className="pl-6 py-4">
-                    <p className="font-medium text-white">{user.name}</p>
+                    <p className="font-medium text-base-content">{user.name}</p>
                     <p className="text-xs text-muted">{user.email}</p>
                   </td>
                   <td className="py-4 whitespace-nowrap">

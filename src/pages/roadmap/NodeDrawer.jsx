@@ -48,10 +48,10 @@ export default function NodeDrawer({ open, node, prerequisites = [], onStatusCha
     if (isEditingLinks) {
       return (
         <li key={i} className="rounded-xl border border-base-300 bg-base-200/50 p-3.5 space-y-3">
-          <p className="text-sm font-medium text-white">{res.title}</p>
+          <p className="text-sm font-medium text-base-content">{res.title}</p>
           <input
             type="url"
-            className="w-full rounded-md border border-base-300 bg-base-100 px-3 py-2 text-sm text-white focus:border-primary focus:outline-none"
+            className="w-full rounded-md border border-base-300 bg-base-100 px-3 py-2 text-sm text-base-content focus:border-primary focus:outline-none"
             placeholder="Paste custom link here..."
             value={res.url || ''}
             onChange={(e) => {
@@ -73,7 +73,7 @@ export default function NodeDrawer({ open, node, prerequisites = [], onStatusCha
           className="group block rounded-xl border border-base-300 bg-base-200/30 p-3.5 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:bg-base-200/60 hover:shadow-sm"
         >
           <div className="mb-1.5 flex items-start justify-between gap-2">
-            <div className="flex items-center gap-2 font-medium text-white group-hover:text-primary">
+            <div className="flex items-center gap-2 font-medium text-base-content group-hover:text-primary">
               <Icon name={TYPE_ICONS[res.type] || 'external-link'} className="h-4 w-4 text-muted group-hover:text-primary" />
               <span className="leading-tight">{res.title}</span>
             </div>
@@ -102,7 +102,7 @@ export default function NodeDrawer({ open, node, prerequisites = [], onStatusCha
                 <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide" style={{ color: color.text, backgroundColor: color.bg, borderColor: color.border }}>
                   {node.category || 'General'}
                 </span>
-                <h2 className="mt-2 text-xl font-bold leading-snug text-white">{node.title}</h2>
+                <h2 className="mt-2 text-xl font-bold leading-snug text-base-content">{node.title}</h2>
               </div>
               <button type="button" className="btn btn-ghost btn-sm btn-square flex-shrink-0" onClick={onClose}><Icon name="x" className="h-5 w-5" /></button>
             </header>
@@ -113,7 +113,7 @@ export default function NodeDrawer({ open, node, prerequisites = [], onStatusCha
                 <p className="eyebrow mb-3">Topic Status</p>
                 <div className="flex flex-wrap gap-2">
                   {ROADMAP_STATUSES.map((s) => (
-                    <button key={s.value} type="button" disabled={saving} onClick={() => onStatusChange(node.id, s.value)} className={cn('btn btn-sm rounded-full transition-colors', (node.status || 'not_started') === s.value ? 'btn-primary' : 'btn-outline border-base-300 text-muted hover:border-primary/50 hover:text-white')}>
+                    <button key={s.value} type="button" disabled={saving} onClick={() => onStatusChange(node.id, s.value)} className={cn('btn btn-sm rounded-full transition-colors', (node.status || 'not_started') === s.value ? 'btn-primary' : 'btn-outline border-base-300 text-muted hover:border-primary/50 hover:text-base-content')}>
                       {s.label}
                     </button>
                   ))}

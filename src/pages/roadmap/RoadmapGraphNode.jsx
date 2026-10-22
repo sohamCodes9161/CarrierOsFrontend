@@ -55,7 +55,7 @@ export default function RoadmapGraphNode({ node, locked, onOpen, registerRef }) 
       <p
         className={cn(
           'text-base font-bold leading-tight ml-1',
-          (completed || skipped) ? 'text-muted' : 'text-white group-hover:text-primary transition-colors',
+          (completed || skipped) ? 'text-muted' : 'text-base-content group-hover:text-primary transition-colors',
           completed && 'line-through decoration-success/50'
         )}
       >

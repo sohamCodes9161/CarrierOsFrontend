@@ -40,7 +40,7 @@ export default function QuizHistoryTab({ history = [], onReviewDebrief }) {
       {/* Header & Filter */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 className="text-lg font-bold text-white">Assessment Mastery History</h3>
+          <h3 className="text-lg font-bold text-base-content">Assessment Mastery History</h3>
           <p className="text-xs text-muted">Grouped by topic hierarchy and daily progression</p>
         </div>
 
@@ -88,7 +88,7 @@ export default function QuizHistoryTab({ history = [], onReviewDebrief }) {
                       {avgAccuracy}%
                     </div>
                     <div>
-                      <h4 className="font-bold text-white text-base">{topic}</h4>
+                      <h4 className="font-bold text-base-content text-base">{topic}</h4>
                       <p className="text-xs text-muted">
                         {isMultiDay ? `${attempts.length}-Day Spaced Journey` : '1-Time Assessment'} • Avg Accuracy: {avgAccuracy}%
                       </p>
@@ -131,11 +131,11 @@ export default function QuizHistoryTab({ history = [], onReviewDebrief }) {
                             className="group flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-base-300/60 bg-surface-2 p-3.5 transition-all hover:border-primary hover:bg-surface-3/80 cursor-pointer"
                           >
                             <div className="flex items-center gap-3">
-                              <Badge variant="ghost" className="font-bold text-white text-xs px-2.5 py-1">
+                              <Badge variant="ghost" className="font-bold text-base-content text-xs px-2.5 py-1">
                                 {dayLabel}
                               </Badge>
                               <div>
-                                <p className="text-xs font-semibold text-white group-hover:text-primary transition-colors">
+                                <p className="text-xs font-semibold text-base-content group-hover:text-primary transition-colors">
                                   {attempt.score} Pts • {attempt.accuracyPercentage}% Accuracy
                                 </p>
                                 <p className="text-[10px] text-muted">{dateStr}</p>

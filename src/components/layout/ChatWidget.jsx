@@ -8,7 +8,6 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 
-// 1. Helper component for Code Blocks with Copy button
 function CodeBlock({ children }) {
   const [copied, setCopied] = useState(false);
 
@@ -22,33 +21,32 @@ function CodeBlock({ children }) {
   };
 
   return (
-    <div className="relative group my-3 rounded-xl border border-white/10 bg-black/80 overflow-hidden">
-      <div className="flex items-center justify-between bg-white/5 px-3 py-1.5 border-b border-white/10 text-[10px] font-mono text-muted">
+    <div className="relative group my-3 rounded-xl border border-base-content/10 bg-base-200 overflow-hidden">
+      <div className="flex items-center justify-between bg-base-content/5 px-3 py-1.5 border-b border-base-content/10 text-[10px] font-mono text-muted">
         <span>code</span>
         <button
           type="button"
           onClick={handleCopy}
-          className="flex items-center gap-1 text-[10px] text-muted hover:text-white transition-colors bg-white/10 px-2 py-0.5 rounded-md"
+          className="flex items-center gap-1 text-[10px] text-muted hover:text-base-content transition-colors bg-base-content/10 px-2 py-0.5 rounded-md"
         >
           <Icon name={copied ? 'check' : 'copy'} className="h-3 w-3" />
           {copied ? 'Copied!' : 'Copy'}
         </button>
       </div>
-      <pre className="p-3 max-w-full overflow-x-auto font-mono text-xs text-emerald-400 custom-scrollbar leading-relaxed">
+      {/* UPDATED: Changed text-base-content to text-success for dynamic green code */}
+    <pre className="p-3 max-w-full overflow-x-auto font-mono text-xs text-warning custom-scrollbar leading-relaxed">
         {children}
       </pre>
     </div>
   );
 }
 
-// 2. Helper component for Table Blocks with Copy button
 function TableBlock({ children }) {
   const [copied, setCopied] = useState(false);
   const tableRef = useRef(null);
 
   const handleCopy = () => {
     if (tableRef.current) {
-      // Copies the clean text content of the table
       navigator.clipboard.writeText(tableRef.current.innerText);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -56,20 +54,20 @@ function TableBlock({ children }) {
   };
 
   return (
-    <div className="relative group my-3 max-w-full overflow-hidden rounded-xl border border-white/15 bg-black/40">
-      <div className="flex items-center justify-between bg-white/5 px-3 py-1.5 border-b border-white/10 text-[10px] font-mono text-muted">
+    <div className="relative group my-3 max-w-full overflow-hidden rounded-xl border border-base-content/15 bg-base-200">
+      <div className="flex items-center justify-between bg-base-content/5 px-3 py-1.5 border-b border-base-content/10 text-[10px] font-mono text-muted">
         <span>table</span>
         <button
           type="button"
           onClick={handleCopy}
-          className="flex items-center gap-1 text-[10px] text-muted hover:text-white transition-colors bg-white/10 px-2 py-0.5 rounded-md"
+          className="flex items-center gap-1 text-[10px] text-muted hover:text-base-content transition-colors bg-base-content/10 px-2 py-0.5 rounded-md"
         >
           <Icon name={copied ? 'check' : 'copy'} className="h-3 w-3" />
           {copied ? 'Copied!' : 'Copy'}
         </button>
       </div>
       <div className="overflow-x-auto custom-scrollbar" ref={tableRef}>
-        <table className="w-full text-left text-xs text-gray-200 border-collapse">
+        <table className="w-full text-left text-xs text-base-content border-collapse">
           {children}
         </table>
       </div>
@@ -77,7 +75,6 @@ function TableBlock({ children }) {
   );
 }
 
-// 3. Helper component for Full Message Copy button
 function MessageCopyButton({ content }) {
   const [copied, setCopied] = useState(false);
 
@@ -88,11 +85,11 @@ function MessageCopyButton({ content }) {
   };
 
   return (
-    <div className="mt-3 flex justify-end border-t border-white/10 pt-2">
+    <div className="mt-3 flex justify-end border-t border-base-content/10 pt-2">
       <button
         type="button"
         onClick={handleCopy}
-        className="flex items-center gap-1.5 text-[10px] font-medium text-muted hover:text-white transition-colors"
+        className="flex items-center gap-1.5 text-[10px] font-medium text-muted hover:text-base-content transition-colors"
       >
         <Icon name={copied ? 'check' : 'copy'} className="h-3 w-3" />
         {copied ? 'Full response copied!' : 'Copy full response'}
@@ -209,36 +206,36 @@ export default function ChatWidget() {
     pre({ children }) {
       return <CodeBlock>{children}</CodeBlock>;
     },
-    code({ inline, className, children, ...props }) {
+   code({ inline, className, children, ...props }) {
       if (inline) {
         return (
           <code
-            className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-xs text-primary"
+            className="rounded bg-base-content/10 px-1.5 py-0.5 font-mono text-xs text-warning"
             {...props}
           >
             {children}
           </code>
         );
       }
-      return <code className="font-mono text-xs" {...props}>{children}</code>;
+      return <code className="font-mono text-xs text-warning" {...props}>{children}</code>;
     },
     table({ children }) {
       return <TableBlock>{children}</TableBlock>;
     },
     thead({ children }) {
-      return <thead className="bg-white/10 text-white font-semibold">{children}</thead>;
+      return <thead className="bg-base-content/10 text-base-content font-semibold">{children}</thead>;
     },
     tbody({ children }) {
-      return <tbody className="divide-y divide-white/10">{children}</tbody>;
+      return <tbody className="divide-y divide-base-content/10">{children}</tbody>;
     },
     tr({ children }) {
-      return <tr className="hover:bg-white/5 transition-colors">{children}</tr>;
+      return <tr className="hover:bg-base-content/5 transition-colors">{children}</tr>;
     },
     th({ children }) {
-      return <th className="p-2.5 font-semibold text-white border-b border-white/15 whitespace-nowrap">{children}</th>;
+      return <th className="p-2.5 font-semibold text-base-content border-b border-base-content/15 whitespace-nowrap">{children}</th>;
     },
     td({ children }) {
-      return <td className="p-2.5 text-gray-300 align-top">{children}</td>;
+      return <td className="p-2.5 text-base-content/80 align-top">{children}</td>;
     },
     ul({ children }) {
       return <ul className="mb-2 list-disc pl-4 space-y-1">{children}</ul>;
@@ -251,18 +248,18 @@ export default function ChatWidget() {
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
       {isOpen && (
-        <div className="mb-4 flex h-[520px] w-[360px] flex-col overflow-hidden rounded-[24px] border border-white/10 bg-[#0d0d0d]/95 shadow-[0_12px_40px_rgba(0,0,0,0.6)] backdrop-blur-xl transition-all sm:w-[420px]">
-          <div className="flex items-center justify-between border-b border-white/10 bg-white/[0.03] px-5 py-4">
+        <div className="mb-4 flex h-[520px] w-[360px] flex-col overflow-hidden rounded-[24px] border border-base-content/10 bg-base-100/95 shadow-pop backdrop-blur-xl transition-all sm:w-[420px]">
+          <div className="flex items-center justify-between border-b border-base-content/10 bg-base-content/5 px-5 py-4">
             <div className="flex items-center gap-3">
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/20 text-primary shadow-inner">
                 <Icon name="sparkles" className="h-4 w-4" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold tracking-wide text-white">
+                <h3 className="text-sm font-semibold tracking-wide text-base-content">
                   CareerOS Mentor
                 </h3>
-                <p className="flex items-center gap-1.5 text-[10px] font-medium text-emerald-400">
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+                <p className="flex items-center gap-1.5 text-[10px] font-medium text-success">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-success" />
                   Online & Context-Aware
                 </p>
               </div>
@@ -270,7 +267,7 @@ export default function ChatWidget() {
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="rounded-lg p-1.5 text-muted transition-colors hover:bg-white/15 hover:text-white"
+              className="rounded-lg p-1.5 text-muted transition-colors hover:bg-base-content/15 hover:text-base-content"
             >
               <Icon name="x" className="h-4 w-4" />
             </button>
@@ -290,7 +287,7 @@ export default function ChatWidget() {
                     'max-w-[90%] rounded-2xl px-4 py-3 text-sm shadow-sm break-words overflow-hidden',
                     message.role === 'user'
                       ? 'rounded-br-xs bg-primary font-normal text-primary-content'
-                      : 'rounded-bl-xs border border-white/10 bg-white/[0.06] text-gray-200'
+                      : 'rounded-bl-xs border border-base-content/10 bg-base-content/5 text-base-content/90'
                   )}
                 >
                   {typeof message.content === 'string' ? (
@@ -303,7 +300,6 @@ export default function ChatWidget() {
                         {message.content}
                       </ReactMarkdown>
                       
-                      {/* Attach the Full Response copy button ONLY to assistant messages */}
                       {message.role === 'assistant' && (
                         <MessageCopyButton content={message.content} />
                       )}
@@ -317,7 +313,7 @@ export default function ChatWidget() {
 
             {isLoading && (
               <div className="flex w-full justify-start">
-                <div className="rounded-2xl rounded-bl-xs border border-white/10 bg-white/[0.06] px-4 py-3">
+                <div className="rounded-2xl rounded-bl-xs border border-base-content/10 bg-base-content/5 px-4 py-3">
                   <div className="flex items-center gap-1.5">
                     <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary" />
                     <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary [animation-delay:0.2s]" />
@@ -329,12 +325,12 @@ export default function ChatWidget() {
             <div ref={messagesEndRef} />
           </div>
 
-          <form onSubmit={handleSend} className="border-t border-white/10 bg-white/[0.02] p-3">
+          <form onSubmit={handleSend} className="border-t border-base-content/10 bg-base-content/5 p-3">
             <div className="relative flex items-center">
               <input
                 type="text"
                 placeholder="Ask coding or career questions..."
-                className="w-full rounded-full border border-white/10 bg-black/40 py-3 pl-4 pr-12 text-sm text-white shadow-inner transition-all placeholder:text-muted/70 focus:border-primary focus:bg-black/60 focus:outline-none"
+                className="w-full rounded-full border border-base-content/10 bg-base-200 py-3 pl-4 pr-12 text-sm text-base-content shadow-inner transition-all placeholder:text-muted focus:border-primary focus:bg-base-100 focus:outline-none"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 disabled={isLoading}
@@ -356,7 +352,7 @@ export default function ChatWidget() {
         onClick={() => setIsOpen((previous) => !previous)}
         className="group relative flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-content shadow-[0_0_25px_rgba(var(--primary),0.4)] transition-all duration-300 hover:scale-105 hover:shadow-[0_0_35px_rgba(var(--primary),0.6)] active:scale-95"
       >
-        <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-500 ring-2 ring-[#0d0d0d]" />
+        <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-success ring-2 ring-page" />
         <Icon
           name={isOpen ? 'x' : 'sparkles'}
           className="h-6 w-6 transition-transform duration-300 group-hover:rotate-12"

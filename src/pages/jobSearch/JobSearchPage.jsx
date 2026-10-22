@@ -20,7 +20,7 @@ export default function JobSearchPage() {
             className={`btn btn-sm rounded-full font-medium transition-all ${
               activeTab === 'search' 
                 ? 'btn-primary shadow-sm' 
-                : 'btn-ghost text-muted hover:text-white'
+                : 'btn-ghost text-muted hover:text-base-content'
             }`}
           >
             Live Search
@@ -30,7 +30,7 @@ export default function JobSearchPage() {
             className={`btn btn-sm rounded-full font-medium transition-all ${
               activeTab === 'tracker' 
                 ? 'btn-primary shadow-sm' 
-                : 'btn-ghost text-muted hover:text-white'
+                : 'btn-ghost text-muted hover:text-base-content'
             }`}
           >
             Pipeline Tracker

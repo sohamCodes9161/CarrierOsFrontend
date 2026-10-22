@@ -158,7 +158,7 @@ export default function BasicsTab({ portfolio, onChange }) {
               )}
               {uploading && (
                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center backdrop-blur-sm">
-                  <span className="loading loading-spinner loading-md text-white"></span>
+                  <span className="loading loading-spinner loading-md text-base-content"></span>
                 </div>
               )}
             </div>

@@ -134,13 +134,13 @@ export default function RoadmapDetail() {
           <div>
             <p className="eyebrow mb-1 text-primary">Your Progress</p>
             <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-bold tracking-tight text-white">{percent}%</span>
+              <span className="text-4xl font-bold tracking-tight text-base-content">{percent}%</span>
               <span className="text-sm font-medium text-muted">completed</span>
             </div>
           </div>
           <div className="flex flex-wrap gap-4 text-sm font-medium">
             <div className="flex flex-col">
-              <span className="text-white text-lg">{completed} / {total}</span>
+              <span className="text-base-content text-lg">{completed} / {total}</span>
               <span className="text-muted text-xs uppercase tracking-wider">Topics</span>
             </div>
             {counts.in_progress > 0 && (
@@ -161,7 +161,7 @@ export default function RoadmapDetail() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 mb-8">
         <SectionCard title="Overview" className="lg:col-span-2 shadow-sm">
-          <p className="whitespace-pre-line text-[15px] leading-relaxed text-white/80">{roadmap.overallSummary}</p>
+          <p className="whitespace-pre-line text-[15px] leading-relaxed text-base-content/80">{roadmap.overallSummary}</p>
         </SectionCard>
         <SectionCard title="Skill gap" className="shadow-sm">
           <div className="space-y-5">
@@ -188,7 +188,7 @@ export default function RoadmapDetail() {
               aria-selected={mode === m.value}
               className={cn(
                 'flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-all',
-                mode === m.value ? 'bg-primary text-primary-content shadow' : 'text-muted hover:text-white hover:bg-base-200/50'
+                mode === m.value ? 'bg-primary text-primary-content shadow' : 'text-muted hover:text-base-content hover:bg-base-200/50'
               )}
               onClick={() => setMode(m.value)}
             >
@@ -211,7 +211,7 @@ export default function RoadmapDetail() {
                 aria-selected={view === tab.value}
                 className={cn(
                   'rounded-md px-3 py-1.5 text-sm font-medium transition-all',
-                  view === tab.value ? 'bg-base-300 text-white shadow' : 'text-muted hover:text-white hover:bg-base-200/50'
+                  view === tab.value ? 'bg-base-300 text-base-content shadow' : 'text-muted hover:text-base-content hover:bg-base-200/50'
                 )}
                 onClick={() => setView(tab.value)}
               >
@@ -255,7 +255,7 @@ export default function RoadmapDetail() {
                   <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-primary border border-primary/30 text-sm font-bold shadow-sm">
                     {milestone.order}
                   </span>
-                  <h2 className="text-lg font-bold text-white">{milestone.title}</h2>
+                  <h2 className="text-lg font-bold text-base-content">{milestone.title}</h2>
                   <Badge tone="neutral" className="ml-2 bg-surface-2 border-base-300">
                     {done}/{nodes.length} done
                   </Badge>
@@ -267,7 +267,7 @@ export default function RoadmapDetail() {
           })}
           {orphanNodes.length > 0 && (
             <section aria-label="Other topics">
-              <h2 className="mb-4 text-lg font-bold text-white ml-4">Other topics</h2>
+              <h2 className="mb-4 text-lg font-bold text-base-content ml-4">Other topics</h2>
               <div className="space-y-3 ml-4">{orphanNodes.map(renderNode)}</div>
             </section>
           )}

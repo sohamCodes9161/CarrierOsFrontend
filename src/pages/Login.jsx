@@ -48,7 +48,7 @@ export default function Login() {
 
   return (
     <div className="surface p-6 sm:p-8">
-      <h1 className="text-2xl font-bold tracking-tight text-white">Welcome back</h1>
+      <h1 className="text-2xl font-bold tracking-tight text-base-content">Welcome back</h1>
       <p className="mt-1 text-sm text-muted">Sign in to continue to your dashboard.</p>
 
       {expired && !submit.error && (
@@ -75,17 +75,24 @@ export default function Login() {
           />
         </FormField>
 
-        <FormField id="password" label="Password" error={errors.password}>
-          <PasswordInput
-            {...fieldProps('password', errors.password)}
-            error={errors.password}
-            autoComplete="current-password"
-            placeholder="Your password"
-            value={values.password}
-            onChange={update('password')}
-            disabled={submit.loading}
-          />
-        </FormField>
+        <div>
+          <FormField id="password" label="Password" error={errors.password}>
+            <PasswordInput
+              {...fieldProps('password', errors.password)}
+              error={errors.password}
+              autoComplete="current-password"
+              placeholder="Your password"
+              value={values.password}
+              onChange={update('password')}
+              disabled={submit.loading}
+            />
+          </FormField>
+          <div className="mt-2 flex justify-end">
+            <Link to="/forgot-password" className="text-sm font-medium text-primary hover:underline">
+              Forgot password?
+            </Link>
+          </div>
+        </div>
 
         <Button type="submit" className="w-full" loading={submit.loading}>
           {submit.loading ? 'Signing in…' : 'Sign in'}

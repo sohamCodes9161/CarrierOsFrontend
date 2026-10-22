@@ -53,7 +53,7 @@ export default function Register() {
 
   return (
     <div className="surface p-6 sm:p-8">
-      <h1 className="text-2xl font-bold tracking-tight text-white">Create your account</h1>
+      <h1 className="text-2xl font-bold tracking-tight text-base-content">Create your account</h1>
       <p className="mt-1 text-sm text-muted">Start analyzing your resume and practicing interviews.</p>
 
       <form onSubmit={handleSubmit} noValidate className="mt-6 space-y-4">

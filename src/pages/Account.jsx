@@ -3,17 +3,28 @@ import { useState } from 'react';
 
 import SectionCard from '../components/common/SectionCard.jsx';
 import PageHeader from '../components/layout/PageHeader.jsx';
+import FormField, { fieldProps } from '../components/forms/FormField.jsx';
+import PasswordInput from '../components/forms/PasswordInput.jsx';
 import Button from '../components/ui/Button.jsx';
+import ErrorAlert from '../components/ui/ErrorAlert.jsx';
 import Icon from '../components/ui/Icon.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useAction } from '../hooks/useAction.js';
 import { useDocumentTitle } from '../hooks/useDocumentTitle.js';
+import { useToast } from '../context/ToastContext.jsx';
 import { formatDate, initials } from '../utils/format.js';
+import { changePassword as changePasswordApi } from '../services/api/authApi.js';
 
 export default function Account() {
   useDocumentTitle('Account');
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
+
   const [signingOut, setSigningOut] = useState(false);
+  const [passwords, setPasswords] = useState({ currentPassword: '', newPassword: '' });
+  const [passwordErrors, setPasswordErrors] = useState({});
+  const changePasswordAction = useAction(changePasswordApi);
 
   async function handleLogout() {
     setSigningOut(true);
@@ -21,9 +32,32 @@ export default function Account() {
     navigate('/login', { replace: true });
   }
 
+  function handlePasswordChange(field) {
+    return (e) => {
+      setPasswords((p) => ({ ...p, [field]: e.target.value }));
+      if (passwordErrors[field]) setPasswordErrors((errs) => ({ ...errs, [field]: '' }));
+    };
+  }
+
+  async function submitPasswordChange(e) {
+    e.preventDefault();
+    const nextErrors = {
+      currentPassword: passwords.currentPassword ? '' : 'Current password is required',
+      newPassword: passwords.newPassword.length >= 8 ? '' : 'New password must be at least 8 characters',
+    };
+    setPasswordErrors(nextErrors);
+    if (nextErrors.currentPassword || nextErrors.newPassword) return;
+
+    const result = await changePasswordAction.run(passwords);
+    if (result.ok) {
+      toast.success('Password updated successfully. Please log in again.');
+      await handleLogout();
+    }
+  }
+
   return (
     <div className="mx-auto max-w-2xl">
-      <PageHeader title="Account" description="Your sign-in details." />
+      <PageHeader title="Account" description="Manage your profile and security settings." />
 
       <SectionCard title="Profile">
         <div className="flex items-center gap-4">
@@ -45,6 +79,36 @@ export default function Account() {
             <dd className="mt-1">Email and password</dd>
           </div>
         </dl>
+      </SectionCard>
+
+      <SectionCard title="Security" className="mt-4">
+        <form onSubmit={submitPasswordChange} className="space-y-4 max-w-sm">
+          <ErrorAlert error={changePasswordAction.error} />
+          
+          <FormField id="currentPassword" label="Current Password" error={passwordErrors.currentPassword}>
+            <PasswordInput
+              {...fieldProps('currentPassword', passwordErrors.currentPassword)}
+              placeholder="Enter current password"
+              value={passwords.currentPassword}
+              onChange={handlePasswordChange('currentPassword')}
+              disabled={changePasswordAction.loading}
+            />
+          </FormField>
+          
+          <FormField id="newPassword" label="New Password" error={passwordErrors.newPassword}>
+            <PasswordInput
+              {...fieldProps('newPassword', passwordErrors.newPassword)}
+              placeholder="At least 8 characters"
+              value={passwords.newPassword}
+              onChange={handlePasswordChange('newPassword')}
+              disabled={changePasswordAction.loading}
+            />
+          </FormField>
+
+          <Button type="submit" loading={changePasswordAction.loading}>
+            Update password
+          </Button>
+        </form>
       </SectionCard>
 
       <SectionCard title="Session" className="mt-4">

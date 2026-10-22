@@ -7,8 +7,11 @@ import AuthLayout from '../layouts/AuthLayout.jsx';
 import PublicLayout from '../layouts/PublicLayout.jsx';
 import ProtectedRoute from './ProtectedRoute.jsx';
 import PublicOnlyRoute from './PublicOnlyRoute.jsx';
-import AdminRoute from './AdminRoute.jsx'; // <-- New import
+import AdminRoute from './AdminRoute.jsx'; 
 import ScrollToTop from './ScrollToTop.jsx';
+import ForgotPassword from '../pages/ForgotPassword.jsx';
+import ResetPassword from '../pages/ResetPassword.jsx';
+
 const GuidePage = lazy(() => import('../pages/GuidePage.jsx'));
 const Landing = lazy(() => import('../pages/Landing.jsx'));
 const Login = lazy(() => import('../pages/Login.jsx'));
@@ -28,11 +31,8 @@ const RoadmapPage = lazy(() => import('../pages/roadmap/RoadmapPage.jsx'));
 const RoadmapDetail = lazy(() => import('../pages/roadmap/RoadmapDetail.jsx'));
 const PortfolioEditor = lazy(() => import('../pages/portfolio/PortfolioEditor.jsx'));
 const PublicPortfolio = lazy(() => import('../pages/portfolio/PublicPortfolio.jsx'));
-
 const JobSearchPage = lazy(() => import('../pages/jobSearch/JobSearchPage.jsx'));
 const QuizPage = lazy(() => import('../pages/quiz/QuizPage.jsx'));
-
-// <-- New Lazy-Loaded Admin Page
 const AdminDashboard = lazy(() => import('../pages/admin/AdminDashboard.jsx'));
 
 export default function AppRoutes() {
@@ -49,6 +49,9 @@ export default function AppRoutes() {
             <Route element={<AuthLayout />}>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              {/* MOVED: Password reset pages must be accessible to logged-out users */}
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
             </Route>
           </Route>
 
@@ -75,14 +78,14 @@ export default function AppRoutes() {
               <Route path="/account" element={<Account />} />
             </Route>
           </Route>
-
-          {/* Admin Protected Routes (Guides/Professors) */}
+          
           {/* Admin Protected Routes */}
-<Route element={<AdminRoute />}>
-  <Route element={<AppLayout />}>
-    <Route path="/admin" element={<AdminDashboard />} />
-  </Route>
-</Route>
+          <Route element={<AdminRoute />}>
+            <Route element={<AppLayout />}>
+              <Route path="/admin" element={<AdminDashboard />} />
+            </Route>
+          </Route>
+          
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

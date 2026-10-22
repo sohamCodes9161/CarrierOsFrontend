@@ -25,13 +25,13 @@ export default function QuizDebriefModal({ attempt, isOpen, onClose }) {
         {/* Sticky Header */}
         <div className="flex items-center justify-between border-b border-base-300 bg-surface-3 px-6 py-4">
           <div>
-            <h3 className="text-lg font-bold text-white">Attempt Details & AI Review</h3>
-            <p className="text-xs text-muted">Topic: <strong className="text-white">{topic}</strong></p>
+            <h3 className="text-lg font-bold text-base-content">Attempt Details & AI Review</h3>
+            <p className="text-xs text-muted">Topic: <strong className="text-base-content">{topic}</strong></p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-1 text-muted hover:bg-surface-2 hover:text-white transition-colors"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-1 text-muted hover:bg-surface-2 hover:text-base-content transition-colors"
             aria-label="Close modal"
           >
             ✕
@@ -43,13 +43,13 @@ export default function QuizDebriefModal({ attempt, isOpen, onClose }) {
           {/* Metric Banner */}
           <div className="flex flex-col sm:flex-row items-center gap-6 rounded-2xl border border-base-300 bg-surface-2 p-5">
             <div className="flex h-20 w-20 shrink-0 flex-col items-center justify-center rounded-full border-4 border-primary bg-surface-1 font-black shadow-pop">
-              <span className="text-xl text-white">{accuracyPercentage}%</span>
+              <span className="text-xl text-base-content">{accuracyPercentage}%</span>
               <span className="text-[9px] uppercase tracking-wider text-muted">Accuracy</span>
             </div>
 
             <div className="flex-1 space-y-2 text-center sm:text-left">
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                <span className="text-2xl font-black text-white">{score} Points</span>
+                <span className="text-2xl font-black text-base-content">{score} Points</span>
                 {timeBonusMultiplier > 1.0 && (
                   <Badge variant="success" className="text-xs">
                     ⚡ {timeBonusMultiplier}x Speed Bonus Applied!
@@ -59,7 +59,7 @@ export default function QuizDebriefModal({ attempt, isOpen, onClose }) {
 
               <p className="text-xs text-muted">
                 Correct Answers: <strong className="text-success">{correctResponsesCount}</strong> / {totalQuestions || userResponses.length || 5} • Time Spent:{' '}
-                <strong className="text-white">{totalTimeSpentSeconds}s</strong>
+                <strong className="text-base-content">{totalTimeSpentSeconds}s</strong>
               </p>
 
               {aiDebrief.speedAnalysis && (
@@ -72,7 +72,7 @@ export default function QuizDebriefModal({ attempt, isOpen, onClose }) {
           {aiDebrief.summary && (
             <div className="rounded-xl border border-base-300 bg-surface-1 p-4">
               <h4 className="text-xs font-bold uppercase tracking-wider text-muted">AI Debrief Summary</h4>
-              <p className="mt-1 text-sm font-medium text-white">{aiDebrief.summary}</p>
+              <p className="mt-1 text-sm font-medium text-base-content">{aiDebrief.summary}</p>
             </div>
           )}
 
@@ -116,11 +116,11 @@ export default function QuizDebriefModal({ attempt, isOpen, onClose }) {
           {/* Missed Questions Breakdown */}
           {failedList.length > 0 ? (
             <div className="space-y-3">
-              <h4 className="text-sm font-bold text-white">Missed Question Analysis ({failedList.length})</h4>
+              <h4 className="text-sm font-bold text-base-content">Missed Question Analysis ({failedList.length})</h4>
               <div className="space-y-3">
                 {failedList.map((item, idx) => (
                   <div key={idx} className="space-y-2 rounded-xl border border-base-300 bg-surface-1 p-4 text-xs">
-                    <p className="font-semibold text-white">{item.questionText}</p>
+                    <p className="font-semibold text-base-content">{item.questionText}</p>
 
                     <div className="grid gap-1">
                       <p className="text-error">
@@ -133,7 +133,7 @@ export default function QuizDebriefModal({ attempt, isOpen, onClose }) {
 
                     {item.explanation && (
                       <div className="mt-2 rounded-lg bg-surface-2 p-2.5 text-muted">
-                        <strong className="text-white">💡 AI Explanation:</strong> {item.explanation}
+                        <strong className="text-base-content">💡 AI Explanation:</strong> {item.explanation}
                       </div>
                     )}
                   </div>

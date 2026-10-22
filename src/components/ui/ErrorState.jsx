@@ -15,7 +15,7 @@ export default function ErrorState({ error, title, onRetry, backTo, backLabel = 
       <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-error/10 text-error">
         <Icon name="warning" className="h-6 w-6" />
       </div>
-      <h2 className="text-base font-semibold text-white">{heading}</h2>
+      <h2 className="text-base font-semibold text-base-content">{heading}</h2>
       <p className="mt-1 max-w-md text-sm text-muted">{message}</p>
       <div className="mt-5 flex flex-wrap justify-center gap-2">
         {onRetry && (

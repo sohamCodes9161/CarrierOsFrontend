@@ -147,7 +147,7 @@ export default function QuizGeneratorForm({ onStartQuiz, loading, history = [], 
     <Card className="mx-auto max-w-2xl p-6 sm:p-8 space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-base-300 pb-4">
         <div>
-          <h3 className="text-xl font-bold text-white">Create Adaptive Quiz</h3>
+          <h3 className="text-xl font-bold text-base-content">Create Adaptive Quiz</h3>
           <p className="text-xs text-muted">Generate instant practice sessions or multi-day mastery programs</p>
         </div>
         <Badge variant={estimatedTier.variant} className="px-3 py-1 text-xs self-start sm:self-auto">
@@ -176,7 +176,7 @@ export default function QuizGeneratorForm({ onStartQuiz, loading, history = [], 
       <form onSubmit={handleSubmit} className="space-y-5">
         {creationMode === 'custom' ? (
           <div>
-            <label className="label text-xs font-semibold text-white">Topic Name</label>
+            <label className="label text-xs font-semibold text-base-content">Topic Name</label>
             <input
               type="text"
               value={topic}
@@ -211,7 +211,7 @@ export default function QuizGeneratorForm({ onStartQuiz, loading, history = [], 
         ) : (
           <div className="space-y-4">
             <div>
-              <label className="label text-xs font-semibold text-white">Select Roadmap</label>
+              <label className="label text-xs font-semibold text-base-content">Select Roadmap</label>
               <select
                 value={roadmapId}
                 onChange={(e) => setRoadmapId(e.target.value)}
@@ -236,7 +236,7 @@ export default function QuizGeneratorForm({ onStartQuiz, loading, history = [], 
 
             {roadmapId && (
               <div>
-                <label className="label text-xs font-semibold text-white">Select Specific Node</label>
+                <label className="label text-xs font-semibold text-base-content">Select Specific Node</label>
                 <select
                   value={nodeId}
                   onChange={(e) => handleNodeChange(e.target.value)}
@@ -263,7 +263,7 @@ export default function QuizGeneratorForm({ onStartQuiz, loading, history = [], 
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="label text-xs font-semibold text-white">Questions Per Quiz</label>
+            <label className="label text-xs font-semibold text-base-content">Questions Per Quiz</label>
             <select
               value={questionCount}
               onChange={(e) => setQuestionCount(e.target.value)}
@@ -276,7 +276,7 @@ export default function QuizGeneratorForm({ onStartQuiz, loading, history = [], 
           </div>
 
           <div>
-            <label className="label text-xs font-semibold text-white">Learning Program</label>
+            <label className="label text-xs font-semibold text-base-content">Learning Program</label>
             <select
               value={programDays}
               onChange={(e) => setProgramDays(e.target.value)}

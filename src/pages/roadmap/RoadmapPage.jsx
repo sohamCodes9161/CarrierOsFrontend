@@ -142,7 +142,7 @@ export default function RoadmapPage() {
         </SectionCard>
 
         <div className="lg:col-span-3">
-          <h2 className="mb-4 text-lg font-bold text-white">Your Roadmaps</h2>
+          <h2 className="mb-4 text-lg font-bold text-base-content">Your Roadmaps</h2>
           {list.loading ? (
             <SkeletonRows rows={3} />
           ) : list.error ? (
@@ -162,7 +162,7 @@ export default function RoadmapPage() {
                   </span>
                   
                   <span className="relative z-10 min-w-0 flex-1 pointer-events-none">
-                    <span className="block truncate text-lg font-bold text-white group-hover:text-primary transition-colors">{r.targetRole}</span>
+                    <span className="block truncate text-lg font-bold text-base-content group-hover:text-primary transition-colors">{r.targetRole}</span>
                     <span className="mt-2 flex flex-wrap items-center gap-3">
                       <Badge tone="info" className="bg-info/10 text-info border-info/20">
                         <Icon name="clock" className="h-3 w-3 mr-1" />

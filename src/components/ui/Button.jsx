@@ -4,8 +4,8 @@ const VARIANTS = {
   primary: 'btn-primary',
   secondary: 'btn-secondary',
   neutral: 'btn-neutral border border-line-2',
-  outline: 'btn-outline border-base-300 text-white hover:bg-white hover:text-black hover:border-white',
-  ghost: 'btn-ghost text-muted hover:bg-white/[0.06] hover:text-white',
+  outline: 'btn-outline border-base-300 text-base-content hover:bg-white hover:text-black hover:border-white',
+  ghost: 'btn-ghost text-muted hover:bg-base-content/[0.06] hover:text-base-content',
   danger: 'btn-error',
   'danger-outline': 'btn-outline btn-error',
 };

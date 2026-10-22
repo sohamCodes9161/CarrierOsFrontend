@@ -65,11 +65,11 @@ export default function Landing() {
         <div className="grid-veil pointer-events-none absolute inset-x-0 top-0 -z-10 h-[620px]" />
         <div className="mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:px-6 sm:py-24 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-8">
           <Reveal>
-            <span className="inline-flex items-center gap-2 rounded-full border border-base-300 bg-white/[0.04] px-3.5 py-1.5 text-xs font-medium text-muted">
+            <span className="inline-flex items-center gap-2 rounded-full border border-base-300 bg-base-content/[0.04] px-3.5 py-1.5 text-xs font-medium text-muted">
               <span className="h-1.5 w-1.5 rounded-full bg-success" aria-hidden="true" />
               AI-driven career infrastructure
             </span>
-            <h1 className="mt-5 text-4xl font-bold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl">
+            <h1 className="mt-5 text-4xl font-bold leading-[1.05] tracking-tight text-base-content sm:text-5xl lg:text-6xl">
               The Operating System
               <br />
               for Your Career.
@@ -116,32 +116,32 @@ export default function Landing() {
                 </span>
               </div>
 
-              <div className="mt-4 flex items-center gap-4 rounded-box border border-base-300 bg-white/[0.03] p-4">
+              <div className="mt-4 flex items-center gap-4 rounded-box border border-base-300 bg-base-content/[0.03] p-4">
                 <ScoreRing value={78} size={64} label="ATS score" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-white">Resume · ATS score</p>
+                  <p className="text-sm font-semibold text-base-content">Resume · ATS score</p>
                   <p className="mt-0.5 text-xs text-muted">Backend Developer · updated 2d ago</p>
                 </div>
               </div>
 
               <div className="mt-3 grid grid-cols-2 gap-3">
-                <div className="rounded-box border border-base-300 bg-white/[0.03] p-3.5">
+                <div className="rounded-box border border-base-300 bg-base-content/[0.03] p-3.5">
                   <p className="eyebrow">GitHub</p>
                   <p className="stat-figure mt-1 text-xl">Intermediate</p>
                   <p className="mt-0.5 text-xs text-muted">42 stars · 8 repos</p>
                 </div>
-                <div className="rounded-box border border-base-300 bg-white/[0.03] p-3.5">
+                <div className="rounded-box border border-base-300 bg-base-content/[0.03] p-3.5">
                   <p className="eyebrow">Interviews</p>
                   <p className="stat-figure mt-1 text-xl">81/100</p>
                   <p className="mt-0.5 text-xs text-muted">Latest · Frontend Dev</p>
                 </div>
               </div>
 
-              <div className="mt-3 rounded-box border border-base-300 bg-white/[0.03] p-3.5">
+              <div className="mt-3 rounded-box border border-base-300 bg-base-content/[0.03] p-3.5">
                 <p className="eyebrow mb-2">Roadmap progress</p>
                 <div className="flex items-center justify-between text-xs text-muted">
                   <span>Full-stack Developer</span>
-                  <span className="font-medium text-white">33%</span>
+                  <span className="font-medium text-base-content">33%</span>
                 </div>
                 <progress className="progress progress-primary mt-2 h-1.5 w-full" value={33} max="100" aria-hidden="true" />
               </div>
@@ -150,7 +150,7 @@ export default function Landing() {
             {/* Small floating chip layered over the panel for depth */}
             <div className="surface absolute -bottom-5 -left-5 hidden w-44 rotate-[-3deg] p-3.5 sm:block">
               <p className="eyebrow">System prompt</p>
-              <p className="mt-1 text-sm font-medium leading-snug text-white">Deploy your public portfolio</p>
+              <p className="mt-1 text-sm font-medium leading-snug text-base-content">Deploy your public portfolio</p>
             </div>
           </Reveal>
         </div>
@@ -160,17 +160,17 @@ export default function Landing() {
       <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
         <Reveal className="max-w-xl">
           <p className="eyebrow mb-3">System Architecture</p>
-          <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Everything in one ecosystem</h2>
+          <h2 className="text-2xl font-bold tracking-tight text-base-content sm:text-3xl">Everything in one ecosystem</h2>
           <p className="mt-2 text-sm text-muted sm:text-base">Six native tools that build seamlessly on each other.</p>
         </Reveal>
         <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map((feature, i) => (
             <Reveal key={feature.title} delay={i * 60}>
               <Tilt className="surface h-full p-5">
-                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-full border border-base-300 bg-white/[0.04] text-white">
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-full border border-base-300 bg-base-content/[0.04] text-base-content">
                   <Icon name={feature.icon} className="h-5 w-5" />
                 </div>
-                <h3 className="text-base font-semibold text-white">{feature.title}</h3>
+                <h3 className="text-base font-semibold text-base-content">{feature.title}</h3>
                 <p className="mt-1.5 text-sm leading-relaxed text-muted">{feature.text}</p>
               </Tilt>
             </Reveal>
@@ -183,7 +183,7 @@ export default function Landing() {
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
           <Reveal className="max-w-xl">
             <p className="eyebrow mb-3">Execution flow</p>
-            <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">How CareerOS works</h2>
+            <h2 className="text-2xl font-bold tracking-tight text-base-content sm:text-3xl">How CareerOS works</h2>
           </Reveal>
           <ol className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-3">
             {STEPS.map((step, index) => (
@@ -193,7 +193,7 @@ export default function Landing() {
                     {index + 1}
                   </span>
                   <div>
-                    <h3 className="font-semibold text-white">{step.title}</h3>
+                    <h3 className="font-semibold text-base-content">{step.title}</h3>
                     <p className="mt-1 text-sm leading-relaxed text-muted">{step.text}</p>
                   </div>
                 </li>
@@ -207,7 +207,7 @@ export default function Landing() {
       {!authed && (
         <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28">
           <Reveal className="surface grid-veil relative overflow-hidden px-6 py-14 text-center sm:px-12">
-            <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Upgrade your career infrastructure</h2>
+            <h2 className="text-2xl font-bold tracking-tight text-base-content sm:text-3xl">Upgrade your career infrastructure</h2>
             <p className="mx-auto mt-2 max-w-md text-sm text-muted sm:text-base">
               System initialization takes less than a minute. Boot up your first analysis today.
             </p>

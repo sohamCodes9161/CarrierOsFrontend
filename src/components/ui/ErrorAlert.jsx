@@ -12,7 +12,7 @@ export default function ErrorAlert({ error, title, className = '', children }) {
   return (
     <div
       role="alert"
-      className={cn('flex items-start gap-3 rounded-btn border border-error/30 bg-error/10 px-4 py-3 text-sm text-white', className)}
+      className={cn('flex items-start gap-3 rounded-btn border border-error/30 bg-error/10 px-4 py-3 text-sm text-base-content', className)}
     >
       <Icon name="x-circle" className="mt-0.5 h-5 w-5 flex-shrink-0 text-error" />
       <div className="min-w-0 flex-1">

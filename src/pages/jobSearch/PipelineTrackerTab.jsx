@@ -63,7 +63,7 @@ export default function PipelineTrackerTab() {
           {APPLICATION_STATUSES.map((st) => (
             <Card key={st.key} className="p-3 text-center border border-base-300 bg-surface-2 shadow-sm">
               <p className="text-xs text-muted font-medium">{st.label}</p>
-              <p className="text-xl font-black text-white mt-1">{stats[st.key] || 0}</p>
+              <p className="text-xl font-black text-base-content mt-1">{stats[st.key] || 0}</p>
             </Card>
           ))}
         </div>
@@ -78,7 +78,7 @@ export default function PipelineTrackerTab() {
             return (
               <div key={status.key} className="w-80 flex-shrink-0 flex flex-col gap-3 rounded-2xl border border-base-300 bg-surface-1/50 p-3 snap-start">
                 <div className="flex items-center justify-between px-1 pb-1">
-                  <span className="text-sm font-bold text-white tracking-wide">{status.label}</span>
+                  <span className="text-sm font-bold text-base-content tracking-wide">{status.label}</span>
                   <Badge variant="ghost" className="bg-surface-3">{statusApps.length}</Badge>
                 </div>
 

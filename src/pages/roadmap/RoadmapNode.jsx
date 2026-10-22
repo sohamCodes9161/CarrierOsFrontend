@@ -83,7 +83,7 @@ export default function RoadmapNode({ node, prerequisites = [], onStatusChange, 
               .filter(Boolean)
               .join(' · ')}
           </p>
-          {node.description && <p className="mt-2.5 text-sm leading-relaxed text-white/80">{node.description}</p>}
+          {node.description && <p className="mt-2.5 text-sm leading-relaxed text-base-content/80">{node.description}</p>}
           
           {prerequisites.length > 0 && (
             <p className={cn('mt-2 text-xs font-medium', blocking.length > 0 ? 'text-warning' : 'text-muted')}>
@@ -129,7 +129,7 @@ export default function RoadmapNode({ node, prerequisites = [], onStatusChange, 
                   {node.checklist.map((item, i) => (
                     <div key={i} className="flex items-start gap-2">
                       <Icon name={done ? "check-square" : "square"} className={cn("mt-0.5 h-3.5 w-3.5 flex-shrink-0", done ? "text-primary" : "text-muted")} />
-                      <span className={cn("text-xs", done ? "text-muted line-through" : "text-white/90")}>{item}</span>
+                      <span className={cn("text-xs", done ? "text-muted line-through" : "text-base-content/90")}>{item}</span>
                     </div>
                   ))}
                 </div>
@@ -161,7 +161,7 @@ export default function RoadmapNode({ node, prerequisites = [], onStatusChange, 
                 <ul className="grid gap-3 sm:grid-cols-2">
                   {node.suggestedProjects.map((p, i) => (
                     <li key={`${i}-${p.title}`} className="rounded-lg border border-base-300 bg-base-200/50 p-3">
-                      <p className="font-semibold text-white/90">{p.title}</p>
+                      <p className="font-semibold text-base-content/90">{p.title}</p>
                       {p.description && <p className="mt-1 text-xs leading-relaxed text-muted">{p.description}</p>}
                     </li>
                   ))}

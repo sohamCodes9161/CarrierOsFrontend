@@ -131,7 +131,7 @@ export default function QuizPage() {
             >
               Daily Reviews
               {duePrograms.length > 0 && (
-                <span className="ml-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-error text-[10px] text-white">
+                <span className="ml-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-error text-[10px] text-base-content">
                   {duePrograms.length}
                 </span>
               )}
@@ -164,7 +164,7 @@ export default function QuizPage() {
           {activeTab === 'due' && (
             <div className="max-w-2xl mx-auto space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="font-bold text-white text-base">Scheduled Spaced Practice</h3>
+                <h3 className="font-bold text-base-content text-base">Scheduled Spaced Practice</h3>
                 <span className="text-xs text-muted">{duePrograms.length} Due Today</span>
               </div>
 
@@ -173,7 +173,7 @@ export default function QuizPage() {
                   <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-success/10 text-success">
                     ✓
                   </div>
-                  <h4 className="font-bold text-white">All Caught Up for Today!</h4>
+                  <h4 className="font-bold text-base-content">All Caught Up for Today!</h4>
                   <p className="text-xs text-muted">
                     No pending daily reviews scheduled. Create a new custom quiz or start a 10-day mastery program!
                   </p>
@@ -190,7 +190,7 @@ export default function QuizPage() {
                   {duePrograms.map((prog) => (
                     <Card key={prog.id} className="p-4 flex items-center justify-between gap-4 bg-surface-2">
                       <div>
-                        <p className="font-bold text-white">{prog.topic}</p>
+                        <p className="font-bold text-base-content">{prog.topic}</p>
                         <p className="text-xs text-muted">
                           Day {prog.currentDay} of {prog.totalDays} Spaced Program
                         </p>
