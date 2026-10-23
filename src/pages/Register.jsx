@@ -10,16 +10,20 @@ import { useToast } from '../context/ToastContext.jsx';
 import { useAction } from '../hooks/useAction.js';
 import { useDocumentTitle } from '../hooks/useDocumentTitle.js';
 import { validateEmail, validatePassword } from '../utils/validation.js';
+import { authApi } from '../services/api/index.js'; // Adjust path if needed
 
 export default function Register() {
   useDocumentTitle('Create account');
-  const { register } = useAuth();
+  const { setSession } = useAuth(); // Assuming your auth context has a way to manually set the session
   const navigate = useNavigate();
   const toast = useToast();
 
-  const [values, setValues] = useState({ name: '', email: '', password: '', confirm: '' });
+  const [step, setStep] = useState('details'); // 'details' | 'otp'
+  const [values, setValues] = useState({ name: '', email: '', password: '', confirm: '', otp: '' });
   const [errors, setErrors] = useState({});
-  const submit = useAction(register);
+  
+  const submitDetails = useAction((data) => authApi.register(data));
+  const submitOtp = useAction((data) => authApi.verifyRegistration(data)); // You'll need to add this to your api service
 
   function update(field) {
     return (event) => {
@@ -28,7 +32,7 @@ export default function Register() {
     };
   }
 
-  function validate() {
+  function validateDetails() {
     const name = values.name.trim();
     return {
       name: name.length < 2 ? 'Name must be at least 2 characters' : name.length > 100 ? 'Name must be 100 characters or fewer' : '',
@@ -38,17 +42,69 @@ export default function Register() {
     };
   }
 
-  async function handleSubmit(event) {
+  async function handleDetailsSubmit(event) {
     event.preventDefault();
-    const nextErrors = validate();
+    const nextErrors = validateDetails();
     setErrors(nextErrors);
     if (Object.values(nextErrors).some(Boolean)) return;
 
-    const result = await submit.run({ name: values.name.trim(), email: values.email.trim(), password: values.password });
+    const result = await submitDetails.run({ name: values.name.trim(), email: values.email.trim(), password: values.password });
     if (result.ok) {
-      toast.success('Account created. Welcome to CareerOS!');
+      toast.success('Verification code sent to your email.');
+      setStep('otp');
+    }
+  }
+
+  async function handleOtpSubmit(event) {
+    event.preventDefault();
+    if (!values.otp || values.otp.length < 6) {
+      setErrors({ otp: 'Please enter the 6-digit code' });
+      return;
+    }
+
+    const result = await submitOtp.run({ email: values.email.trim(), otp: values.otp.trim() });
+    if (result.ok) {
+      toast.success('Account verified! Welcome to CareerOS.');
+      setSession(result.data.user, result.data.accessToken); // Update your context
       navigate('/dashboard', { replace: true });
     }
+  }
+
+  if (step === 'otp') {
+    return (
+      <div className="surface p-6 sm:p-8">
+        <h1 className="text-2xl font-bold tracking-tight text-base-content">Verify your email</h1>
+        <p className="mt-1 text-sm text-muted">We sent a 6-digit code to <strong>{values.email}</strong>.</p>
+
+        <form onSubmit={handleOtpSubmit} className="mt-6 space-y-4">
+          <ErrorAlert error={submitOtp.error} />
+
+          <FormField id="otp" label="Verification Code" error={errors.otp}>
+            <input
+              {...fieldProps('otp', errors.otp)}
+              type="text"
+              maxLength={6}
+              placeholder="123456"
+              className={`${inputClass(errors.otp)} text-center text-xl tracking-widest`}
+              value={values.otp}
+              onChange={update('otp')}
+              disabled={submitOtp.loading}
+              autoFocus
+            />
+          </FormField>
+
+          <Button type="submit" className="w-full" loading={submitOtp.loading}>
+            {submitOtp.loading ? 'Verifying…' : 'Verify and Create Account'}
+          </Button>
+          
+          <div className="mt-4 text-center">
+             <button type="button" onClick={() => setStep('details')} className="text-sm text-muted hover:text-base-content">
+               &larr; Back to edit details
+             </button>
+          </div>
+        </form>
+      </div>
+    );
   }
 
   return (
@@ -56,71 +112,32 @@ export default function Register() {
       <h1 className="text-2xl font-bold tracking-tight text-base-content">Create your account</h1>
       <p className="mt-1 text-sm text-muted">Start analyzing your resume and practicing interviews.</p>
 
-      <form onSubmit={handleSubmit} noValidate className="mt-6 space-y-4">
-        <ErrorAlert error={submit.error} />
+      <form onSubmit={handleDetailsSubmit} noValidate className="mt-6 space-y-4">
+        <ErrorAlert error={submitDetails.error} />
 
         <FormField id="name" label="Full name" error={errors.name}>
-          <input
-            {...fieldProps('name', errors.name)}
-            type="text"
-            autoComplete="name"
-            placeholder="Jane Doe"
-            maxLength={100}
-            className={inputClass(errors.name)}
-            value={values.name}
-            onChange={update('name')}
-            disabled={submit.loading}
-            autoFocus
-          />
+          <input {...fieldProps('name', errors.name)} type="text" placeholder="Jane Doe" className={inputClass(errors.name)} value={values.name} onChange={update('name')} disabled={submitDetails.loading} autoFocus />
         </FormField>
 
         <FormField id="email" label="Email" error={errors.email}>
-          <input
-            {...fieldProps('email', errors.email)}
-            type="email"
-            autoComplete="email"
-            placeholder="you@example.com"
-            className={inputClass(errors.email)}
-            value={values.email}
-            onChange={update('email')}
-            disabled={submit.loading}
-          />
+          <input {...fieldProps('email', errors.email)} type="email" placeholder="you@example.com" className={inputClass(errors.email)} value={values.email} onChange={update('email')} disabled={submitDetails.loading} />
         </FormField>
 
-        <FormField id="password" label="Password" error={errors.password} hint="At least 8 characters, with a letter and a number.">
-          <PasswordInput
-            {...fieldProps('password', errors.password, true)}
-            error={errors.password}
-            autoComplete="new-password"
-            placeholder="Create a password"
-            value={values.password}
-            onChange={update('password')}
-            disabled={submit.loading}
-          />
+        <FormField id="password" label="Password" error={errors.password} hint="At least 8 characters.">
+          <PasswordInput {...fieldProps('password', errors.password, true)} placeholder="Create a password" value={values.password} onChange={update('password')} disabled={submitDetails.loading} />
         </FormField>
 
         <FormField id="confirm" label="Confirm password" error={errors.confirm}>
-          <PasswordInput
-            {...fieldProps('confirm', errors.confirm)}
-            error={errors.confirm}
-            autoComplete="new-password"
-            placeholder="Repeat your password"
-            value={values.confirm}
-            onChange={update('confirm')}
-            disabled={submit.loading}
-          />
+          <PasswordInput {...fieldProps('confirm', errors.confirm)} placeholder="Repeat your password" value={values.confirm} onChange={update('confirm')} disabled={submitDetails.loading} />
         </FormField>
 
-        <Button type="submit" className="w-full" loading={submit.loading}>
-          {submit.loading ? 'Creating account…' : 'Create account'}
+        <Button type="submit" className="w-full" loading={submitDetails.loading}>
+          {submitDetails.loading ? 'Sending code…' : 'Continue'}
         </Button>
       </form>
 
       <p className="mt-6 text-center text-sm text-muted">
-        Already have an account?{' '}
-        <Link to="/login" className="link link-primary font-medium no-underline hover:underline">
-          Sign in
-        </Link>
+        Already have an account? <Link to="/login" className="link link-primary font-medium no-underline hover:underline">Sign in</Link>
       </p>
     </div>
   );

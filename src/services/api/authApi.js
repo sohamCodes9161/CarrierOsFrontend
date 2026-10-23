@@ -1,9 +1,16 @@
 import { api, refreshAccessToken, setAccessToken } from './client.js';
 
+// STEP 1: Just sends the details and triggers the OTP email (No token yet)
 export async function register({ name, email, password }) {
   const data = await api.post('/auth/register', { name, email, password }, { auth: false });
+  return data; 
+}
+
+// STEP 2: Sends the OTP, verifies the account, and gets the token
+export async function verifyRegistration({ email, otp }) {
+  const data = await api.post('/auth/verify-registration', { email, otp }, { auth: false });
   setAccessToken(data.accessToken);
-  return data.user;
+  return data; // Return the full data object so Register.jsx can extract data.user and data.accessToken
 }
 
 export async function login({ email, password }) {
@@ -30,7 +37,7 @@ export async function restoreSession() {
   return getMe();
 }
 
-// NEW: Password Management API Calls
+// Password Management API Calls
 export async function forgotPassword(email) {
   return api.post('/auth/forgot-password', { email }, { auth: false });
 }

@@ -1,18 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 
 import AiWaitNotice from '../../components/common/AiWaitNotice.jsx';
 import PageHeader from '../../components/layout/PageHeader.jsx';
 import Badge from '../../components/ui/Badge.jsx';
 import Button from '../../components/ui/Button.jsx';
-import AudioPlayer from '../../components/ui/AudioPlayer.jsx';
 import ErrorAlert from '../../components/ui/ErrorAlert.jsx';
 import ErrorState from '../../components/ui/ErrorState.jsx';
 import { PageSkeleton } from '../../components/ui/Skeleton.jsx';
 import { useToast } from '../../context/ToastContext.jsx';
 import { useAction } from '../../hooks/useAction.js';
 import { useApi } from '../../hooks/useApi.js';
-import { useAudioPolling } from '../../hooks/useAudioPolling.js';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js';
 import { interviewApi } from '../../services/api/index.js';
 import { humanize } from '../../utils/format.js';
@@ -20,30 +18,103 @@ import AnsweredQuestion from './AnsweredQuestion.jsx';
 import AnswerComposer from './AnswerComposer.jsx';
 import InterviewReport from './InterviewReport.jsx';
 
+// --- Web Speech API TTS Utility ---
+export function playHumanLikeAudio(text) {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  const voices = window.speechSynthesis.getVoices();
+
+  // 1. Exact matches for the most human-like cloud voices across browsers
+  const preferredVoiceNames = [
+    "Microsoft Aria Online (Natural) - English (United States)", // Edge (Best)
+    "Microsoft Guy Online (Natural) - English (United States)",  // Edge
+    "Google US English",                                         // Chrome
+    "Google UK English Female",                                  // Chrome
+    "Samantha",                                                  // macOS standard
+    "Daniel"                                                     // macOS UK
+  ];
+
+  let bestVoice = null;
+  for (const name of preferredVoiceNames) {
+    bestVoice = voices.find((v) => v.name === name);
+    if (bestVoice) break;
+  }
+
+  // 2. Fallback to any voice labeled "Natural" or "Premium"
+  if (!bestVoice) {
+    bestVoice = voices.find((v) => v.name.includes('Natural') || v.name.includes('Premium'));
+  }
+
+  // 3. Final fallback to any English voice
+  if (!bestVoice) {
+    bestVoice = voices.find((v) => v.lang.startsWith('en'));
+  }
+
+  if (bestVoice) {
+    utterance.voice = bestVoice;
+  }
+
+  // Dropping the rate to 0.9 makes it sound much more conversational and less rushed
+  utterance.rate = 0.9; 
+  utterance.pitch = 1.0; // Altering pitch usually makes it sound MORE robotic, keep at 1
+
+  window.speechSynthesis.speak(utterance);
+}
+
+// Force Chrome to load cloud voices on mount
+if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+}
+// ---------------------------------
+
 export default function InterviewSession() {
   const { id } = useParams();
   const toast = useToast();
   const { data: interview, error, loading, reload, setData } = useApi(() => interviewApi.getInterview(id), [id]);
-  const audio = useAudioPolling(interview, id, setData);
   const sendText = useAction((text) => interviewApi.submitAnswer(id, text));
   const sendAudio = useAction((file) => interviewApi.submitAudioAnswer(id, file));
-  // The welcome message must finish before the first question's audio starts, so the
-  // question player's autoplay is held back until the greeting reports itself done
-  // (or there's no greeting to wait for in the first place).
-  const [greetingPlayed, setGreetingPlayed] = useState(false);
+  
+  const lastSpokenQuestionId = useRef(null);
 
   useDocumentTitle(interview ? `${interview.role} interview` : 'Interview');
+
+  const questions = interview?.questions || [];
+  const completed = interview?.status === 'completed';
+  const current = questions[questions.length - 1];
+
+  // Auto-play TTS when a new question arrives
+  useEffect(() => {
+    if (interview?.voiceEnabled && !completed && current?.questionText) {
+      const questionIdentifier = current._id || current.questionNumber;
+      
+      if (lastSpokenQuestionId.current !== questionIdentifier) {
+        lastSpokenQuestionId.current = questionIdentifier;
+        
+        let textToSpeak = current.questionText;
+        if (questions.length === 1) {
+          textToSpeak = `Welcome to your ${interview.role} interview. Let's get started. ${current.questionText}`;
+        }
+        
+        playHumanLikeAudio(textToSpeak);
+      }
+    }
+  }, [interview?.voiceEnabled, completed, current, interview?.role, questions.length]);
+
+  // Cleanup TTS if the user navigates away
+  useEffect(() => {
+    return () => {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
 
   if (loading) return <PageSkeleton label="Loading interview…" />;
   if (error) return <ErrorState error={error} onRetry={reload} backTo="/interviews" backLabel="Back to interviews" />;
   if (!interview) return null;
 
-  const questions = interview.questions || [];
-  const completed = interview.status === 'completed';
-  const current = questions[questions.length - 1];
-  const expectsGreeting = interview.voiceEnabled && questions.length === 1;
-  const greetingSettled = greetingPlayed || (audio.pending.greeting && audio.gaveUp);
-  const questionAutoPlay = !expectsGreeting || greetingSettled;
   const answered = questions.filter((q) => q.answerText !== null && q.answerText !== undefined);
   const submitting = sendText.loading || sendAudio.loading;
   const submitError = sendText.error || sendAudio.error;
@@ -51,8 +122,8 @@ export default function InterviewSession() {
   async function handleSubmitText(text) {
     const result = await sendText.run(text);
     if (result.ok) {
-      setData(result.data);
-      toast.success(result.data.status === 'completed' ? 'Interview complete. Your report is ready.' : 'Answer recorded.');
+      setData(result.data.interview);
+      toast.success(result.data.interview.status === 'completed' ? 'Interview complete. Your report is ready.' : 'Answer recorded.');
     }
   }
 
@@ -83,7 +154,7 @@ export default function InterviewSession() {
     return (
       <div className="mx-auto max-w-4xl">
         {header}
-        <InterviewReport interview={interview} audio={audio} />
+        <InterviewReport interview={interview} />
       </div>
     );
   }
@@ -109,19 +180,6 @@ export default function InterviewSession() {
         />
       </div>
 
-      {expectsGreeting && (interview.greetingAudioUrl || audio.pending.greeting) && (
-        <div className="surface mb-4 p-4">
-          <p className="eyebrow mb-2">Welcome message</p>
-          <AudioPlayer
-            url={interview.greetingAudioUrl}
-            preparing={audio.pending.greeting && audio.polling}
-            unavailable={audio.pending.greeting && audio.gaveUp}
-            label="Interview welcome message"
-            onEnded={() => setGreetingPlayed(true)}
-          />
-        </div>
-      )}
-
       {current && (
         <section className="surface mb-4 p-5" aria-labelledby="current-question">
           <div className="flex flex-wrap items-center gap-2">
@@ -131,15 +189,16 @@ export default function InterviewSession() {
             <Badge tone="neutral">{current.focusArea}</Badge>
           </div>
           <p className="mt-3 text-lg leading-relaxed">{current.questionText}</p>
+          
           {interview.voiceEnabled && (
             <div className="mt-4">
-              <AudioPlayer
-                url={current.questionAudioUrl}
-                preparing={audio.pending.question && audio.polling}
-                unavailable={audio.pending.question && audio.gaveUp}
-                label="Question audio"
-                autoPlay={questionAutoPlay}
-              />
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => playHumanLikeAudio(current.questionText)}
+              >
+                🔊 Listen Again
+              </Button>
             </div>
           )}
         </section>
