@@ -4,12 +4,12 @@ import BulletList from '../../components/common/BulletList.jsx';
 import SectionCard from '../../components/common/SectionCard.jsx';
 import Badge from '../../components/ui/Badge.jsx';
 import Button from '../../components/ui/Button.jsx';
-import AudioPlayer from '../../components/ui/AudioPlayer.jsx';
 import Icon from '../../components/ui/Icon.jsx';
 import ScoreRing from '../../components/ui/ScoreRing.jsx';
 import AnsweredQuestion from './AnsweredQuestion.jsx';
+import { playHumanLikeAudio } from './InterviewSession.jsx';
 
-export default function InterviewReport({ interview, audio }) {
+export default function InterviewReport({ interview }) {
   const report = interview.finalReport;
   const answered = (interview.questions || []).filter((q) => q.answerText !== null && q.answerText !== undefined);
 
@@ -27,14 +27,16 @@ export default function InterviewReport({ interview, audio }) {
                 </Badge>
               </div>
               <p className="mt-2 text-sm leading-relaxed">{report.summary}</p>
+              
               {interview.voiceEnabled && (
-                <div className="mt-3">
-                  <AudioPlayer
-                    url={report.audioUrl}
-                    preparing={audio.pending.report && audio.polling}
-                    unavailable={audio.pending.report && audio.gaveUp}
-                    label="Spoken summary of your report"
-                  />
+                <div className="mt-4">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => playHumanLikeAudio(`${report.summary} ${report.recommendation}`)}
+                  >
+                    🔊 Listen to Summary
+                  </Button>
                 </div>
               )}
             </div>
