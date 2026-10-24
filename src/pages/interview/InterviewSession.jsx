@@ -119,19 +119,24 @@ export default function InterviewSession() {
   const submitting = sendText.loading || sendAudio.loading;
   const submitError = sendText.error || sendAudio.error;
 
-  async function handleSubmitText(text) {
+async function handleSubmitText(text) {
     const result = await sendText.run(text);
     if (result.ok) {
-      setData(result.data.interview);
-      toast.success(result.data.interview.status === 'completed' ? 'Interview complete. Your report is ready.' : 'Answer recorded.');
+      // Safely extract the interview object whether it is nested or returned directly
+      const updatedInterview = result.data.interview || result.data;
+      
+      setData(updatedInterview);
+      toast.success(updatedInterview.status === 'completed' ? 'Interview complete. Your report is ready.' : 'Answer recorded.');
     }
   }
 
   async function handleSubmitAudio(file) {
     const result = await sendAudio.run(file);
     if (result.ok) {
-      setData(result.data.interview);
-      toast.success(result.data.interview.status === 'completed' ? 'Interview complete. Your report is ready.' : 'Answer recorded.');
+      const updatedInterview = result.data.interview || result.data;
+      
+      setData(updatedInterview);
+      toast.success(updatedInterview.status === 'completed' ? 'Interview complete. Your report is ready.' : 'Answer recorded.');
     }
   }
 
