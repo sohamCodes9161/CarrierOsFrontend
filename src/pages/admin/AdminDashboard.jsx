@@ -1,10 +1,53 @@
-import { useEffect, useState } from 'react';
-import { adminApi } from '../../services/api/adminApi.js';
-import { useToast } from '../../context/ToastContext.jsx';
+import { useEffect, useMemo, useState } from 'react';
 import PageHeader from '../../components/layout/PageHeader.jsx';
-import Icon from '../../components/ui/Icon.jsx';
 import Button from '../../components/ui/Button.jsx';
+import Icon from '../../components/ui/Icon.jsx';
 import { Skeleton } from '../../components/ui/Skeleton.jsx';
+import { useToast } from '../../context/ToastContext.jsx';
+import { adminApi } from '../../services/api/adminApi.js';
+
+function UsagePill({ count = 0, limit = 2, isAdmin = false }) {
+  if (isAdmin) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+        ∞ Unlimited
+      </span>
+    );
+  }
+
+  const maxed = count >= limit;
+  const active = count > 0 && !maxed;
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 font-mono text-xs font-medium ${
+        maxed
+          ? 'border border-error/30 bg-error/10 text-error'
+          : active
+            ? 'border border-warning/30 bg-warning/10 text-warning'
+            : 'bg-base-300/70 text-muted'
+      }`}
+    >
+      {count} / {limit}
+      {maxed && <span className="font-sans text-[10px] uppercase tracking-wide">· Max</span>}
+    </span>
+  );
+}
+
+function UserAvatar({ name = '' }) {
+  const initials = name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('');
+
+  return (
+    <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-base-300 bg-base-200 text-xs font-semibold text-base-content">
+      {initials || '?'}
+    </div>
+  );
+}
 
 export default function AdminDashboard() {
   const toast = useToast();
@@ -13,47 +56,68 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [resettingId, setResettingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all'); // all | user | admin
 
-  async function loadAdminData() {
+  async function loadAdminData({ silent = false } = {}) {
     try {
-      setLoading(true);
-      const [statsData, usersData] = await Promise.all([
-        adminApi.getStats(),
-        adminApi.getUsers()
-      ]);
+      if (!silent) setLoading(true);
+      const [statsData, usersData] = await Promise.all([adminApi.getStats(), adminApi.getUsers()]);
       setStats(statsData);
-      setUsers(usersData);
-    } catch (err) {
+      setUsers(Array.isArray(usersData) ? usersData : []);
+    } catch {
       toast.error('Failed to load admin dashboard.');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }
 
   useEffect(() => {
     loadAdminData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function handleResetQuota(userId, userName) {
-    if (!window.confirm(`Reset daily quota for ${userName}?`)) return;
-    
-    setResettingId(userId);
+  async function handleResetQuota(user) {
+    setResettingId(user._id);
     try {
-      await adminApi.resetQuota(userId);
-      toast.success(`Quota reset for ${userName}`);
-      loadAdminData();
+      await adminApi.resetQuota(user._id);
+      // Optimistically update the row immediately without jarring full-page reload
+      setUsers((prev) =>
+        prev.map((u) =>
+          u._id === user._id
+            ? {
+                ...u,
+                usage: {
+                  ...u.usage,
+                  interviews: 0,
+                  roadmaps: 0,
+                  resume_analyses: 0,
+                  github_analyses: 0,
+                  quizzes: 0,
+                  career_profiles: 0,
+                  chat_messages: 0,
+                },
+              }
+            : u
+        )
+      );
+      toast.success(`Daily quota reset for ${user.name}`);
+      loadAdminData({ silent: true });
     } catch (err) {
-      toast.error('Failed to reset quota.');
+      toast.error(err?.message || 'Failed to reset quota.');
     } finally {
       setResettingId(null);
     }
   }
 
-  // --- Feature: Export to CSV ---
   function handleExportCSV() {
-    const headers = ['Name,Email,Role,Joined,Roadmaps Today,Interviews Today'];
-    const rows = users.map(u => 
-      `"${u.name}","${u.email}",${u.role},${new Date(u.createdAt).toLocaleDateString()},${u.usage?.roadmaps || 0},${u.usage?.interviews || 0}`
+    const headers = ['Name,Email,Role,Joined,Roadmaps Today,Interviews Today,Quizzes Today'];
+    const rows = users.map(
+      (u) =>
+        `"${u.name}","${u.email}",${u.role},${new Date(u.createdAt).toLocaleDateString()},${
+          u.role === 'admin' ? 'Unlimited' : u.usage?.roadmaps || 0
+        },${u.role === 'admin' ? 'Unlimited' : u.usage?.interviews || 0},${
+          u.role === 'admin' ? 'Unlimited' : u.usage?.quizzes || 0
+        }`
     );
     const csvContent = headers.concat(rows).join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -64,141 +128,254 @@ export default function AdminDashboard() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   }
 
-  // --- Feature: Search Filter ---
-  const filteredUsers = users.filter(user => 
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = useMemo(() => {
+    return users.filter((user) => {
+      const matchesRole = roleFilter === 'all' || user.role === roleFilter;
+      const q = searchTerm.trim().toLowerCase();
+      const matchesSearch =
+        !q || user.name?.toLowerCase().includes(q) || user.email?.toLowerCase().includes(q);
+      return matchesRole && matchesSearch;
+    });
+  }, [users, roleFilter, searchTerm]);
+
+  const statCards = [
+    { label: 'Total Users', value: stats?.totalUsers || 0, accent: 'text-base-content' },
+    { label: 'Interviews', value: stats?.stats?.totalInterviews || 0, accent: 'text-primary' },
+    { label: 'Roadmaps', value: stats?.stats?.totalRoadmaps || 0, accent: 'text-success' },
+    { label: 'Resumes', value: stats?.stats?.totalResumes || 0, accent: 'text-info' },
+    { label: 'GitHubs', value: stats?.stats?.totalGithubs || 0, accent: 'text-warning' },
+    { label: 'Quizzes', value: stats?.stats?.totalQuizzes || 0, accent: 'text-secondary' },
+  ];
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-6xl space-y-8">
+      <div className="mx-auto max-w-6xl space-y-6">
         <PageHeader title="Admin Command Center" description="Loading system metrics..." />
-        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-28 w-full" />
         <Skeleton className="h-96 w-full" />
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8 pb-12">
-      <PageHeader 
-        title="Admin Command Center" 
-        description="Monitor system usage, aggregate AI token consumption, and manage student accounts." 
+    <div className="mx-auto max-w-6xl space-y-6 pb-12">
+      <PageHeader
+        title="Admin Command Center"
+        description="Monitor platform usage, student daily quotas, and account roles."
+        actions={
+          <Button variant="outline" size="sm" onClick={() => loadAdminData({ silent: true })}>
+            <Icon name="refresh" className="mr-1.5 h-3.5 w-3.5" />
+            Refresh
+          </Button>
+        }
       />
 
       {/* Aggregate Stats Grid */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-        <div className="surface flex flex-col p-5">
-          <p className="text-xs font-medium text-muted">Total Users</p>
-          <p className="mt-2 text-2xl font-bold text-base-content">{stats?.totalUsers || 0}</p>
-        </div>
-        <div className="surface flex flex-col p-5">
-          <p className="text-xs font-medium text-muted">Interviews</p>
-          <p className="mt-2 text-2xl font-bold text-primary">{stats?.stats?.totalInterviews || 0}</p>
-        </div>
-        <div className="surface flex flex-col p-5">
-          <p className="text-xs font-medium text-muted">Roadmaps</p>
-          <p className="mt-2 text-2xl font-bold text-success">{stats?.stats?.totalRoadmaps || 0}</p>
-        </div>
-        <div className="surface flex flex-col p-5">
-          <p className="text-xs font-medium text-muted">Resumes</p>
-          <p className="mt-2 text-2xl font-bold text-info">{stats?.stats?.totalResumes || 0}</p>
-        </div>
-        <div className="surface flex flex-col p-5">
-          <p className="text-xs font-medium text-muted">GitHubs</p>
-          <p className="mt-2 text-2xl font-bold text-warning">{stats?.stats?.totalGithubs || 0}</p>
-        </div>
-        <div className="surface flex flex-col p-5">
-          <p className="text-xs font-medium text-muted">Quizzes</p>
-          <p className="mt-2 text-2xl font-bold text-secondary">{stats?.stats?.totalQuizzes || 0}</p>
-        </div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        {statCards.map((item) => (
+          <div key={item.label} className="surface p-4 transition-colors hover:border-base-content/20">
+            <p className="text-xs font-medium text-muted">{item.label}</p>
+            <p className={`mt-1.5 text-2xl font-bold tabular-nums ${item.accent}`}>{item.value}</p>
+          </div>
+        ))}
       </div>
 
-      {/* User Management Table */}
+      {/* Student Roster & Quota Management */}
       <section className="surface overflow-hidden">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-base-300 px-6 py-4 gap-4">
-          <h2 className="text-lg font-semibold text-base-content">Student Roster & Usage</h2>
-          
-          {/* Search Bar and Export Button Container */}
-          <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
-            <div className="relative w-full sm:w-64">
-              <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
-              <input 
-                type="text" 
-                placeholder="Search students..." 
-                className="w-full bg-base-300/50 border border-base-300 rounded-md pl-9 pr-3 py-1.5 text-sm text-base-content placeholder:text-muted focus:outline-none focus:border-primary transition-colors"
+        <div className="flex flex-col gap-3 border-b border-base-300 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="text-base font-semibold text-base-content">Accounts & Daily Quotas</h2>
+
+            {/* Role Filter Pills */}
+            <div className="inline-flex rounded-lg border border-base-300 bg-base-200/60 p-0.5 text-xs">
+              {[
+                { id: 'all', label: `All (${users.length})` },
+                { id: 'user', label: 'Students' },
+                { id: 'admin', label: 'Admins' },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setRoleFilter(tab.id)}
+                  className={`rounded-md px-2.5 py-1 font-medium transition-colors ${
+                    roleFilter === tab.id
+                      ? 'bg-base-100 text-base-content shadow-xs'
+                      : 'text-muted hover:text-base-content'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Search & Export */}
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="relative w-full sm:w-60">
+              <Icon name="search" className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+              <input
+                type="text"
+                placeholder="Search name or email…"
+                className="w-full rounded-lg border border-base-300 bg-base-200/50 py-1.5 pl-9 pr-3 text-sm text-base-content placeholder:text-muted focus:border-primary focus:outline-none"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            
-            <Button variant="outline" size="sm" onClick={handleExportCSV} className="w-full sm:w-auto flex-shrink-0">
-              <Icon name="document" className="mr-2 h-4 w-4" />
+
+            <Button variant="outline" size="sm" onClick={handleExportCSV} className="flex-shrink-0">
+              <Icon name="document" className="mr-1.5 h-4 w-4" />
               Export CSV
             </Button>
           </div>
         </div>
-        <div className="overflow-x-auto">
+
+        {/* Mobile / Narrow-Panel Card View */}
+        <div className="divide-y divide-base-300 md:hidden">
+          {filteredUsers.map((user) => {
+            const isAdmin = user.role === 'admin';
+            const usedToday = (user.usage?.roadmaps || 0) + (user.usage?.interviews || 0) > 0;
+
+            return (
+              <div key={user._id} className="space-y-3 p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <UserAvatar name={user.name} />
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-base-content">{user.name}</p>
+                      <p className="truncate text-xs text-muted">{user.email}</p>
+                    </div>
+                  </div>
+                  <span
+                    className={`flex-shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                      isAdmin ? 'bg-primary/15 text-primary' : 'bg-base-300 text-muted'
+                    }`}
+                  >
+                    {user.role}
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted">Roadmaps:</span>
+                    <UsagePill count={user.usage?.roadmaps || 0} limit={2} isAdmin={isAdmin} />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted">Interviews:</span>
+                    <UsagePill count={user.usage?.interviews || 0} limit={2} isAdmin={isAdmin} />
+                  </div>
+                </div>
+
+                {!isAdmin && (
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-[11px] text-muted">
+                      Joined {new Date(user.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </span>
+                    <Button
+                      size="xs"
+                      variant={usedToday ? 'outline' : 'ghost'}
+                      loading={resettingId === user._id}
+                      disabled={!usedToday}
+                      onClick={() => handleResetQuota(user)}
+                    >
+                      <Icon name="refresh" className="mr-1 h-3 w-3" />
+                      {usedToday ? 'Reset Quota' : 'Quota Clear'}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="hidden overflow-x-auto md:block">
           <table className="table w-full">
             <thead>
-              <tr className="border-base-300 text-muted">
-                <th className="bg-transparent pl-6">Student</th>
+              <tr className="border-base-300 text-xs uppercase tracking-wider text-muted">
+                <th className="bg-transparent pl-6">Account</th>
                 <th className="bg-transparent">Joined</th>
                 <th className="bg-transparent">Role</th>
-                <th className="bg-transparent">Today's Roadmaps</th>
-                <th className="bg-transparent">Today's Interviews</th>
-                <th className="bg-transparent text-right pr-6">Admin Actions</th>
+                <th className="bg-transparent">Roadmaps Today</th>
+                <th className="bg-transparent">Interviews Today</th>
+                <th className="bg-transparent pr-6 text-right">Quota Action</th>
               </tr>
             </thead>
             <tbody>
-              {filteredUsers.map((user) => (
-                <tr key={user._id} className="border-base-300 hover:bg-base-content/[0.02]">
-                  <td className="pl-6 py-4">
-                    <p className="font-medium text-base-content">{user.name}</p>
-                    <p className="text-xs text-muted">{user.email}</p>
-                  </td>
-                  <td className="py-4 whitespace-nowrap">
-                    <span className="text-sm text-muted">{new Date(user.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</span>
-                  </td>
-                  <td className="py-4">
-                    <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${user.role === 'admin' ? 'bg-primary/20 text-primary' : 'bg-base-300 text-muted'}`}>
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className="py-4">
-                    <span className="font-mono text-sm">{user.usage?.roadmaps || 0} / 2</span>
-                  </td>
-                  <td className="py-4">
-                    <span className="font-mono text-sm">{user.usage?.interviews || 0} / 2</span>
-                  </td>
-                  <td className="px-4 py-4 text-right sm:pr-6 whitespace-nowrap">
-                    <div className="flex justify-end items-center">
-                      <Button 
-                        size="xs" 
-                        variant="outline"
-                        className="text-xs px-2.5 py-1"
-                        loading={resettingId === user._id}
-                        onClick={() => handleResetQuota(user._id, user.name)}
-                        disabled={user.role === 'admin'}
+              {filteredUsers.map((user) => {
+                const isAdmin = user.role === 'admin';
+                const usedToday =
+                  (user.usage?.roadmaps || 0) +
+                    (user.usage?.interviews || 0) +
+                    (user.usage?.resume_analyses || 0) +
+                    (user.usage?.github_analyses || 0) +
+                    (user.usage?.quizzes || 0) >
+                  0;
+
+                return (
+                  <tr key={user._id} className="border-base-300 hover:bg-base-content/[0.02]">
+                    <td className="py-3.5 pl-6">
+                      <div className="flex items-center gap-3">
+                        <UserAvatar name={user.name} />
+                        <div>
+                          <p className="font-medium text-base-content">{user.name}</p>
+                          <p className="text-xs text-muted">{user.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="whitespace-nowrap py-3.5 text-sm text-muted">
+                      {new Date(user.createdAt).toLocaleDateString(undefined, {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </td>
+                    <td className="py-3.5">
+                      <span
+                        className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                          isAdmin ? 'bg-primary/15 text-primary' : 'bg-base-300 text-muted'
+                        }`}
                       >
-                        <Icon name="refresh" className="mr-1 h-3 w-3 flex-shrink-0" />
-                        <span>Reset Quota</span>
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {filteredUsers.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="py-8 text-center text-muted">No users found matching "{searchTerm}".</td>
-                </tr>
-              )}
+                        {user.role}
+                      </span>
+                    </td>
+                    <td className="py-3.5">
+                      <UsagePill count={user.usage?.roadmaps || 0} limit={2} isAdmin={isAdmin} />
+                    </td>
+                    <td className="py-3.5">
+                      <UsagePill count={user.usage?.interviews || 0} limit={2} isAdmin={isAdmin} />
+                    </td>
+                    <td className="whitespace-nowrap py-3.5 pr-6 text-right">
+                      {isAdmin ? (
+                        <span className="text-xs text-muted">Exempt</span>
+                      ) : (
+                        <Button
+                          size="xs"
+                          variant={usedToday ? 'outline' : 'ghost'}
+                          className="px-2.5 py-1 text-xs"
+                          loading={resettingId === user._id}
+                          disabled={!usedToday}
+                          onClick={() => handleResetQuota(user)}
+                        >
+                          <Icon name="refresh" className="mr-1 h-3 w-3 flex-shrink-0" />
+                          <span>{usedToday ? 'Reset Quota' : 'Quota Clear'}</span>
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
+
+        {filteredUsers.length === 0 && (
+          <div className="py-10 text-center text-sm text-muted">
+            No accounts found matching "{searchTerm}".
+          </div>
+        )}
       </section>
     </div>
   );
