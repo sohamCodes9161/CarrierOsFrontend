@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import AiWaitNotice from '../../components/common/AiWaitNotice.jsx';
@@ -19,21 +19,20 @@ import AnswerComposer from './AnswerComposer.jsx';
 import InterviewReport from './InterviewReport.jsx';
 
 // --- Web Speech API TTS Utility ---
-export function playHumanLikeAudio(text) {
+export function playHumanLikeAudio(text, { onStart, onEnd } = {}) {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
 
   window.speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(text);
   const voices = window.speechSynthesis.getVoices();
 
-  // 1. Exact matches for the most human-like cloud voices across browsers
   const preferredVoiceNames = [
-    "Microsoft Aria Online (Natural) - English (United States)", // Edge (Best)
-    "Microsoft Guy Online (Natural) - English (United States)",  // Edge
-    "Google US English",                                         // Chrome
-    "Google UK English Female",                                  // Chrome
-    "Samantha",                                                  // macOS standard
-    "Daniel"                                                     // macOS UK
+    'Microsoft Aria Online (Natural) - English (United States)',
+    'Microsoft Guy Online (Natural) - English (United States)',
+    'Google US English',
+    'Google UK English Female',
+    'Samantha',
+    'Daniel',
   ];
 
   let bestVoice = null;
@@ -42,12 +41,10 @@ export function playHumanLikeAudio(text) {
     if (bestVoice) break;
   }
 
-  // 2. Fallback to any voice labeled "Natural" or "Premium"
   if (!bestVoice) {
     bestVoice = voices.find((v) => v.name.includes('Natural') || v.name.includes('Premium'));
   }
 
-  // 3. Final fallback to any English voice
   if (!bestVoice) {
     bestVoice = voices.find((v) => v.lang.startsWith('en'));
   }
@@ -56,14 +53,16 @@ export function playHumanLikeAudio(text) {
     utterance.voice = bestVoice;
   }
 
-  // Dropping the rate to 0.9 makes it sound much more conversational and less rushed
-  utterance.rate = 0.9; 
-  utterance.pitch = 1.0; // Altering pitch usually makes it sound MORE robotic, keep at 1
+  utterance.rate = 0.9;
+  utterance.pitch = 1.0;
+
+  utterance.onstart = () => onStart?.();
+  utterance.onend = () => onEnd?.();
+  utterance.onerror = () => onEnd?.();
 
   window.speechSynthesis.speak(utterance);
 }
 
-// Force Chrome to load cloud voices on mount
 if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
   window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
 }
@@ -75,8 +74,10 @@ export default function InterviewSession() {
   const { data: interview, error, loading, reload, setData } = useApi(() => interviewApi.getInterview(id), [id]);
   const sendText = useAction((text) => interviewApi.submitAnswer(id, text));
   const sendAudio = useAction((file) => interviewApi.submitAudioAnswer(id, file));
-  
+
   const lastSpokenQuestionId = useRef(null);
+  // 'idle' | 'speaking' | 'paused'
+  const [speechStatus, setSpeechStatus] = useState('idle');
 
   useDocumentTitle(interview ? `${interview.role} interview` : 'Interview');
 
@@ -84,23 +85,62 @@ export default function InterviewSession() {
   const completed = interview?.status === 'completed';
   const current = questions[questions.length - 1];
 
+  const speakText = useCallback((textToSpeak) => {
+    playHumanLikeAudio(textToSpeak, {
+      onStart: () => setSpeechStatus('speaking'),
+      onEnd: () => setSpeechStatus('idle'),
+    });
+  }, []);
+
+  function handleToggleSpeech() {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+
+    if (speechStatus === 'speaking') {
+      window.speechSynthesis.pause();
+      setSpeechStatus('paused');
+    } else if (speechStatus === 'paused') {
+      window.speechSynthesis.resume();
+      setSpeechStatus('speaking');
+    } else if (current?.questionText) {
+      speakText(current.questionText);
+    }
+  }
+
+  function handleRestartSpeech() {
+    if (current?.questionText) {
+      speakText(current.questionText);
+    }
+  }
+
   // Auto-play TTS when a new question arrives
   useEffect(() => {
     if (interview?.voiceEnabled && !completed && current?.questionText) {
       const questionIdentifier = current._id || current.questionNumber;
-      
+
       if (lastSpokenQuestionId.current !== questionIdentifier) {
         lastSpokenQuestionId.current = questionIdentifier;
-        
+
         let textToSpeak = current.questionText;
         if (questions.length === 1) {
           textToSpeak = `Welcome to your ${interview.role} interview. Let's get started. ${current.questionText}`;
         }
-        
-        playHumanLikeAudio(textToSpeak);
+
+        speakText(textToSpeak);
       }
     }
-  }, [interview?.voiceEnabled, completed, current, interview?.role, questions.length]);
+  }, [interview?.voiceEnabled, completed, current, interview?.role, questions.length, speakText]);
+
+  // Auto-pause AI speech if the user starts recording their answer
+  useEffect(() => {
+    const handleMicStart = () => {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window && window.speechSynthesis.speaking) {
+        window.speechSynthesis.pause();
+        setSpeechStatus('paused');
+      }
+    };
+    window.addEventListener('careeros:mic-recording-start', handleMicStart);
+    return () => window.removeEventListener('careeros:mic-recording-start', handleMicStart);
+  }, []);
 
   // Cleanup TTS if the user navigates away
   useEffect(() => {
@@ -119,22 +159,23 @@ export default function InterviewSession() {
   const submitting = sendText.loading || sendAudio.loading;
   const submitError = sendText.error || sendAudio.error;
 
-async function handleSubmitText(text) {
+  async function handleSubmitText(text) {
+    window.speechSynthesis?.cancel();
+    setSpeechStatus('idle');
     const result = await sendText.run(text);
     if (result.ok) {
-      // Safely extract the interview object whether it is nested or returned directly
       const updatedInterview = result.data.interview || result.data;
-      
       setData(updatedInterview);
       toast.success(updatedInterview.status === 'completed' ? 'Interview complete. Your report is ready.' : 'Answer recorded.');
     }
   }
 
   async function handleSubmitAudio(file) {
+    window.speechSynthesis?.cancel();
+    setSpeechStatus('idle');
     const result = await sendAudio.run(file);
     if (result.ok) {
       const updatedInterview = result.data.interview || result.data;
-      
       setData(updatedInterview);
       toast.success(updatedInterview.status === 'completed' ? 'Interview complete. Your report is ready.' : 'Answer recorded.');
     }
@@ -187,25 +228,50 @@ async function handleSubmitText(text) {
 
       {current && (
         <section className="surface mb-4 p-5" aria-labelledby="current-question">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 id="current-question" className="eyebrow">
-              Question {current.questionNumber}
-            </h2>
-            <Badge tone="neutral">{current.focusArea}</Badge>
-          </div>
-          <p className="mt-3 text-lg leading-relaxed">{current.questionText}</p>
-          
-          {interview.voiceEnabled && (
-            <div className="mt-4">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => playHumanLikeAudio(current.questionText)}
-              >
-                🔊 Listen Again
-              </Button>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 id="current-question" className="eyebrow">
+                Question {current.questionNumber}
+              </h2>
+              <Badge tone="neutral">{current.focusArea}</Badge>
             </div>
-          )}
+
+            {interview.voiceEnabled && (
+              <div className="inline-flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={handleToggleSpeech}
+                  className={`btn btn-xs rounded-full px-3 font-medium transition-all ${
+                    speechStatus === 'speaking'
+                      ? 'btn-primary'
+                      : speechStatus === 'paused'
+                        ? 'btn-outline border-primary/60 text-primary'
+                        : 'btn-ghost border border-base-300 bg-base-200/70 hover:bg-base-200'
+                  }`}
+                >
+                  {speechStatus === 'speaking'
+                    ? '⏸ Pause'
+                    : speechStatus === 'paused'
+                      ? '▶ Resume'
+                      : '🔊 Listen Again'}
+                </button>
+
+                {(speechStatus === 'speaking' || speechStatus === 'paused') && (
+                  <button
+                    type="button"
+                    onClick={handleRestartSpeech}
+                    title="Restart question audio"
+                    aria-label="Restart question audio"
+                    className="btn btn-ghost btn-xs btn-circle text-muted hover:text-base-content"
+                  >
+                    ↻
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          <p className="mt-3 text-lg leading-relaxed">{current.questionText}</p>
         </section>
       )}
 
