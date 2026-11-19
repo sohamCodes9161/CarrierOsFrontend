@@ -15,7 +15,6 @@ const canRecord =
 
 const EXTENSIONS = { 'audio/webm': 'webm', 'audio/mp4': 'm4a', 'audio/ogg': 'ogg', 'audio/mpeg': 'mp3', 'audio/wav': 'wav' };
 
-// Below this smoothed level (0-1, RMS of frequency data) the mic is considered silent.
 const SILENCE_THRESHOLD = 0.045;
 const SILENCE_MS = 5000;
 
@@ -24,16 +23,6 @@ function pickMimeType() {
   return candidates.find((type) => window.MediaRecorder.isTypeSupported?.(type)) || '';
 }
 
-/**
- * Answer box with optional voice input.
- *
- * Voice path (interview started with voice enabled):
- *  - Where the browser supports live speech recognition, the transcript streams into the
- *    text box as you talk, and you review it before submitting (text endpoint - fastest).
- *  - Otherwise the recording itself is uploaded and transcribed by the server.
- *  - While recording, 5 continuous seconds below the silence threshold auto-submits the
- *    answer (with a cancelable countdown) so the user doesn't have to remember to stop.
- */
 export default function AnswerComposer({ voiceEnabled, disabled, onSubmitText, onSubmitAudio }) {
   const [text, setText] = useState('');
   const [error, setError] = useState('');
@@ -95,9 +84,6 @@ export default function AnswerComposer({ voiceEnabled, disabled, onSubmitText, o
     []
   );
 
-  // Silence detection: only while actively recording, and only if Web Audio is supported
-  // (without real level data every silent frame would look like "silence", which would
-  // auto-submit even while the user is talking — so this is skipped entirely otherwise).
   useEffect(() => {
     if (!detectSilence || !recording) {
       silenceStartRef.current = null;
@@ -125,7 +111,6 @@ export default function AnswerComposer({ voiceEnabled, disabled, onSubmitText, o
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [micLevel, recording, detectSilence]);
 
-  // Once the silence-triggered stop finishes producing a blob, submit it automatically.
   useEffect(() => {
     if (phase === 'recorded' && autoSubmitRef.current) {
       autoSubmitRef.current = false;
@@ -135,7 +120,7 @@ export default function AnswerComposer({ voiceEnabled, disabled, onSubmitText, o
   }, [phase]);
 
   function cancelAutoSubmit() {
-    silenceStartRef.current = Date.now(); // snooze: give another full window from now
+    silenceStartRef.current = Date.now();
     setSilenceCountdown(Math.round(SILENCE_MS / 1000));
   }
 
@@ -156,13 +141,12 @@ export default function AnswerComposer({ voiceEnabled, disabled, onSubmitText, o
       setText((s.baseText + s.finalText + interim).slice(0, LIMITS.answer));
     };
     recognition.onerror = (event) => {
-      // Permission/service problems: stop retrying and fall back to server-side transcription.
       if (['not-allowed', 'service-not-allowed', 'audio-capture', 'network'].includes(event.error)) s.wantRecognition = false;
     };
     recognition.onend = () => {
       if (s.wantRecognition) {
         try {
-          recognition.start(); // Chrome ends sessions after silence; keep listening while recording
+          recognition.start();
         } catch {
           s.wantRecognition = false;
         }
@@ -181,14 +165,17 @@ export default function AnswerComposer({ voiceEnabled, disabled, onSubmitText, o
   async function startRecording() {
     setMicError('');
     setError('');
-    await resumeAudioContext(); // this click is a user gesture: also unlocks AI-audio autoplay
+    // Pause any active AI TTS playback so the mic doesn't pick up the AI's voice
+    window.dispatchEvent(new Event('careeros:mic-recording-start'));
+    await resumeAudioContext();
+
     let stream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch (err) {
       setMicError(
         err?.name === 'NotAllowedError'
-          ? 'Microphone access is blocked. Allow it in your browser settings to record an answer.'
+          ? 'Microphone access is blocked. Allow it in browser settings to record.'
           : 'Could not access a microphone.'
       );
       return;
@@ -200,7 +187,7 @@ export default function AnswerComposer({ voiceEnabled, disabled, onSubmitText, o
       recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
     } catch {
       stream.getTracks().forEach((track) => track.stop());
-      setMicError('Recording isn’t supported in this browser. You can type your answer instead.');
+      setMicError('Recording isn’t supported in this browser. Type your answer instead.');
       return;
     }
 
@@ -303,20 +290,19 @@ export default function AnswerComposer({ voiceEnabled, disabled, onSubmitText, o
   const usingRecordingOnly = !text.trim() && hasRecording;
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-3">
+    <form onSubmit={handleSubmit} noValidate className="space-y-2.5">
       <FormField
         id="answer"
         label="Your answer"
         error={error}
         counter={`${text.length}/${LIMITS.answer}`}
-        hint={showMic ? 'Type your answer, or record it and review the transcript before sending.' : undefined}
       >
         <textarea
-          {...fieldProps('answer', error, showMic)}
-          rows={7}
+          {...fieldProps('answer', error, false)}
+          rows={5}
           maxLength={LIMITS.answer}
           className={textareaClass(error)}
-          placeholder="Type your answer here…"
+          placeholder={recording ? 'Listening… speak your answer aloud' : 'Type your answer here, or tap Record below…'}
           value={text}
           onChange={(e) => {
             setText(e.target.value);
@@ -327,69 +313,77 @@ export default function AnswerComposer({ voiceEnabled, disabled, onSubmitText, o
         />
       </FormField>
 
-      {showMic && (
-        <div className="rounded-btn border border-base-300 bg-base-200/60 p-3">
-          {recording ? (
-            <div className="space-y-3">
-              <div className="flex flex-wrap items-center gap-3">
-                {audioLevelSupported && <VoiceOrb level={micLevel} active variant="user" size={40} className="flex-shrink-0" />}
-                <span className="flex items-center gap-2 text-sm font-medium text-error" role="status">
-                  <span className="rec-dot h-2.5 w-2.5 rounded-full bg-error" aria-hidden="true" />
-                  Recording {formatSeconds(seconds)}
+      {/* Compact single-row portable action bar */}
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+        <div className="flex flex-wrap items-center gap-2">
+          {showMic && (
+            recording ? (
+              <div className="inline-flex items-center gap-2 rounded-full border border-error/30 bg-error/10 px-2.5 py-1">
+                {audioLevelSupported && <VoiceOrb level={micLevel} active variant="user" size={24} className="flex-shrink-0" />}
+                <span className="flex items-center gap-1.5 text-xs font-semibold tabular-nums text-error" role="status">
+                  <span className="rec-dot h-2 w-2 rounded-full bg-error" aria-hidden="true" />
+                  {formatSeconds(seconds)}
                 </span>
-                <Button variant="neutral" size="sm" onClick={stopRecording}>
-                  <Icon name="stop" className="h-4 w-4" />
-                  Stop
-                </Button>
-              </div>
-              {silenceCountdown !== null && (
-                <div
-                  className="flex flex-wrap items-center gap-2 rounded-btn border border-warning/30 bg-warning/10 px-3 py-2 text-sm text-warning"
-                  role="status"
+                {silenceCountdown !== null && (
+                  <button
+                    type="button"
+                    onClick={cancelAutoSubmit}
+                    title="Auto-submitting on silence — click to keep talking"
+                    className="rounded-full bg-warning/20 px-2 py-0.5 text-[11px] font-medium text-warning hover:bg-warning/30"
+                  >
+                    Auto-send {silenceCountdown}s
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={stopRecording}
+                  className="btn btn-error btn-xs rounded-full px-2.5 text-white"
                 >
-                  <Icon name="clock" className="h-4 w-4 flex-shrink-0" />
-                  <span>Submitting in {silenceCountdown}s due to silence…</span>
-                  <button type="button" className="btn btn-ghost btn-xs ml-auto" onClick={cancelAutoSubmit}>
-                    Keep talking
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="flex flex-wrap items-center gap-3">
-              <Button variant="outline" size="sm" onClick={startRecording} disabled={disabled}>
-                <Icon name="microphone" className="h-4 w-4" />
-                {hasRecording ? 'Record again' : 'Record answer'}
-              </Button>
-              {hasRecording && (
-                <>
-                  <audio controls src={recordingUrl} className="h-9 max-w-full" aria-label="Your recording" />
-                  <button type="button" className="btn btn-ghost btn-xs" onClick={discardRecording} disabled={disabled}>
-                    Discard
-                  </button>
-                </>
-              )}
-            </div>
-          )}
-          {micError && (
-            <p role="alert" className="mt-2 text-sm text-error">
-              {micError}
-            </p>
-          )}
-          {usingRecordingOnly && (
-            <p className="mt-2 text-xs text-muted">No live transcript was captured, so the recording will be transcribed on the server.</p>
-          )}
-          {SpeechRecognitionImpl && (
-            <p className="mt-2 text-xs text-muted">Live transcription uses your browser’s speech service (in Chrome, audio is processed by Google).</p>
+                  <Icon name="stop" className="h-3 w-3" />
+                  Stop
+                </button>
+              </div>
+            ) : (
+              <div className="inline-flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={startRecording}
+                  disabled={disabled}
+                  className="btn btn-outline btn-sm gap-1.5 rounded-full px-3.5"
+                >
+                  <Icon name="microphone" className="h-3.5 w-3.5 text-primary" />
+                  <span>{hasRecording ? 'Re-record' : 'Record'}</span>
+                </button>
+
+                {hasRecording && (
+                  <div className="inline-flex items-center gap-1 rounded-full border border-base-300 bg-base-200/70 px-2 py-0.5">
+                    <audio controls src={recordingUrl} className="h-7 w-36 sm:w-44" aria-label="Your recording" />
+                    <button
+                      type="button"
+                      onClick={discardRecording}
+                      disabled={disabled}
+                      aria-label="Discard recording"
+                      className="btn btn-ghost btn-xs btn-circle text-muted hover:text-error"
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
+              </div>
+            )
           )}
         </div>
-      )}
 
-      <div className="flex justify-end">
-        <Button type="submit" disabled={!canSubmit} loading={disabled}>
+        <Button type="submit" size="sm" disabled={!canSubmit} loading={disabled}>
           {disabled ? 'Submitting…' : usingRecordingOnly ? 'Submit recording' : 'Submit answer'}
         </Button>
       </div>
+
+      {micError && (
+        <p role="alert" className="text-xs text-error">
+          {micError}
+        </p>
+      )}
     </form>
   );
 }
