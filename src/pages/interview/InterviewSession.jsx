@@ -18,11 +18,16 @@ import AnsweredQuestion from './AnsweredQuestion.jsx';
 import AnswerComposer from './AnswerComposer.jsx';
 import InterviewReport from './InterviewReport.jsx';
 
+// Track speech runs so an old utterance's async `onend` never overrides a newly started one
+let speechRunId = 0;
+
 // --- Web Speech API TTS Utility ---
 export function playHumanLikeAudio(text, { onStart, onEnd } = {}) {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
 
+  const currentRun = ++speechRunId;
   window.speechSynthesis.cancel();
+
   const utterance = new SpeechSynthesisUtterance(text);
   const voices = window.speechSynthesis.getVoices();
 
@@ -56,9 +61,15 @@ export function playHumanLikeAudio(text, { onStart, onEnd } = {}) {
   utterance.rate = 0.9;
   utterance.pitch = 1.0;
 
-  utterance.onstart = () => onStart?.();
-  utterance.onend = () => onEnd?.();
-  utterance.onerror = () => onEnd?.();
+  utterance.onstart = () => {
+    if (speechRunId === currentRun) onStart?.();
+  };
+  utterance.onend = () => {
+    if (speechRunId === currentRun) onEnd?.();
+  };
+  utterance.onerror = () => {
+    if (speechRunId === currentRun) onEnd?.();
+  };
 
   window.speechSynthesis.speak(utterance);
 }
@@ -86,6 +97,7 @@ export default function InterviewSession() {
   const current = questions[questions.length - 1];
 
   const speakText = useCallback((textToSpeak) => {
+    setSpeechStatus('speaking');
     playHumanLikeAudio(textToSpeak, {
       onStart: () => setSpeechStatus('speaking'),
       onEnd: () => setSpeechStatus('idle'),
@@ -106,7 +118,8 @@ export default function InterviewSession() {
     }
   }
 
-  function handleRestartSpeech() {
+  function handleResetSpeech() {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
     if (current?.questionText) {
       speakText(current.questionText);
     }
@@ -145,6 +158,7 @@ export default function InterviewSession() {
   // Cleanup TTS if the user navigates away
   useEffect(() => {
     return () => {
+      speechRunId += 1;
       if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
         window.speechSynthesis.cancel();
       }
@@ -160,6 +174,7 @@ export default function InterviewSession() {
   const submitError = sendText.error || sendAudio.error;
 
   async function handleSubmitText(text) {
+    speechRunId += 1;
     window.speechSynthesis?.cancel();
     setSpeechStatus('idle');
     const result = await sendText.run(text);
@@ -171,6 +186,7 @@ export default function InterviewSession() {
   }
 
   async function handleSubmitAudio(file) {
+    speechRunId += 1;
     window.speechSynthesis?.cancel();
     setSpeechStatus('idle');
     const result = await sendAudio.run(file);
@@ -238,35 +254,57 @@ export default function InterviewSession() {
 
             {interview.voiceEnabled && (
               <div className="inline-flex items-center gap-1.5">
+                {/* 1. Pause / Listen toggle (always visible) */}
                 <button
                   type="button"
                   onClick={handleToggleSpeech}
-                  className={`btn btn-xs rounded-full px-3 font-medium transition-all ${
+                  aria-label={speechStatus === 'speaking' ? 'Pause AI voice' : 'Listen to question'}
+                  className={`btn btn-xs gap-1.5 rounded-full px-3 font-medium transition-all ${
                     speechStatus === 'speaking'
                       ? 'btn-primary'
-                      : speechStatus === 'paused'
-                        ? 'btn-outline border-primary/60 text-primary'
-                        : 'btn-ghost border border-base-300 bg-base-200/70 hover:bg-base-200'
+                      : 'btn-ghost border border-base-300 bg-base-200/70 hover:bg-base-200'
                   }`}
                 >
-                  {speechStatus === 'speaking'
-                    ? '⏸ Pause'
-                    : speechStatus === 'paused'
-                      ? '▶ Resume'
-                      : '🔊 Listen Again'}
+                  {speechStatus === 'speaking' ? (
+                    <>
+                      <svg viewBox="0 0 24 24" fill="currentColor" className="h-3.5 w-3.5" aria-hidden="true">
+                        <rect x="6" y="5" width="4" height="14" rx="1" />
+                        <rect x="14" y="5" width="4" height="14" rx="1" />
+                      </svg>
+                      <span>Pause</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg viewBox="0 0 24 24" fill="currentColor" className="h-3.5 w-3.5" aria-hidden="true">
+                        <path d="M8 5.14v14l11-7-11-7z" />
+                      </svg>
+                      <span>Listen</span>
+                    </>
+                  )}
                 </button>
 
-                {(speechStatus === 'speaking' || speechStatus === 'paused') && (
-                  <button
-                    type="button"
-                    onClick={handleRestartSpeech}
-                    title="Restart question audio"
-                    aria-label="Restart question audio"
-                    className="btn btn-ghost btn-xs btn-circle text-muted hover:text-base-content"
+                {/* 2. Reset voice button (always visible) */}
+                <button
+                  type="button"
+                  onClick={handleResetSpeech}
+                  title="Restart voice from beginning"
+                  aria-label="Restart voice from beginning"
+                  className="btn btn-ghost btn-xs btn-circle border border-base-300 bg-base-200/70 text-muted hover:bg-base-200 hover:text-base-content"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-3.5 w-3.5"
+                    aria-hidden="true"
                   >
-                    ↻
-                  </button>
-                )}
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                    <path d="M3 3v5h5" />
+                  </svg>
+                </button>
               </div>
             )}
           </div>
